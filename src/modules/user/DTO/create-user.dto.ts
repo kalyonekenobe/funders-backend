@@ -20,13 +20,7 @@ export class CreateUserDto
   implements
     Pick<
       UserEntity,
-      | 'userRegistrationMethod'
-      | 'firstName'
-      | 'lastName'
-      | 'birthDate'
-      | 'role'
-      | 'email'
-      | 'stripeCustomerId'
+      'userRegistrationMethod' | 'firstName' | 'lastName' | 'birthDate' | 'role' | 'email'
     >,
     Pick<
       Partial<UserEntity>,
@@ -168,15 +162,4 @@ export class CreateUserDto
   @IsString()
   @ValidateIf((_, value) => value)
   refreshToken?: string | null;
-
-  @ApiProperty({
-    description: 'Stripe customer id of this user',
-    examples: ['cus_NffrFeUfNV2Hib', 'cus_FJANdAJafEQdIq'],
-    default: 'cus_NffrFeUfNV2Hib',
-  })
-  @MaxLength(255)
-  @IsString()
-  @IsNotEmpty()
-  @IsDefined()
-  stripeCustomerId: string;
 }

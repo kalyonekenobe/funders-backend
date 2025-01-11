@@ -162,7 +162,7 @@ model UserReport {
   reporterId String             @db.Uuid
   userId     String             @db.Uuid
   reason     UserReportReasons
-  status     UserReportStatuses
+  status     UserReportStatuses @default(OnReview)
   note       String?            @db.Text
   createdAt  DateTime           @default(now()) @db.Timestamptz
   updatedAt  DateTime           @default(now()) @updatedAt
@@ -290,7 +290,7 @@ model PostReport {
   reporterId String             @db.Uuid
   postId     String             @db.Uuid
   reason     PostReportReasons
-  status     PostReportStatuses
+  status     PostReportStatuses @default(OnReview)
   note       String?            @db.Text
   createdAt  DateTime           @default(now()) @db.Timestamptz
   updatedAt  DateTime           @default(now()) @updatedAt
@@ -377,7 +377,7 @@ model PostCommentReport {
   reporterId    String                    @db.Uuid
   postCommentId String                    @db.Uuid
   reason        PostCommentReportReasons
-  status        PostCommentReportStatuses
+  status        PostCommentReportStatuses @default(OnReview)
   note          String?                   @db.Text
   createdAt     DateTime                  @default(now()) @db.Timestamptz
   updatedAt     DateTime                  @default(now()) @updatedAt

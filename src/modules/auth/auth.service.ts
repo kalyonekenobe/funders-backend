@@ -23,17 +23,22 @@ import { HttpService } from '@nestjs/axios';
 import { LoginWithCredentialsDto } from 'src/modules/auth/DTO/login-with-credentials.dto';
 import { LoginWithGoogleDto } from 'src/modules/auth/DTO/login-with-google.dto';
 import { LoginWithDiscordDto } from 'src/modules/auth/DTO/login-with-discord.dto';
-import { PrismaService } from 'src/modules/infrastructure/prisma/prisma.service';
 import { PasswordService } from 'src/modules/infrastructure/password/password.service';
+import { UserRegistrationMethods } from '@prisma/client';
+import { UserRoleService } from 'src/modules/user/submodules/user-role/user-role.service';
+import { ServerException } from 'src/core/exceptions/server.exception';
+import bs58 from 'bs58';
+import * as nacl from 'tweetnacl';
+import { LoginWithSolanaWalletDto } from 'src/modules/auth/DTO/login-with-solana-wallet.dto';
 
 @Injectable()
 export class AuthService {
   private readonly googleOAuth2Client: Auth.OAuth2Client;
 
   constructor(
-    private readonly prismaService: PrismaService,
     private readonly passwordService: PasswordService,
     private readonly userService: UserService,
+    private readonly userRoleService: UserRoleService,
     private readonly jwtService: JwtService,
     private readonly httpService: HttpService,
     private readonly configService: ConfigService,
@@ -43,7 +48,6 @@ export class AuthService {
       configService.get<string>(ConfigVariables.GoogleClientSecret),
       `${configService.get<string>(ConfigVariables.ServerUri)}/oauth2/callback/google`,
     );
-    console.log(`${configService.get<string>(ConfigVariables.ServerUri)}/oauth2/callback/google`);
   }
 
   public async validateUser(
@@ -51,12 +55,9 @@ export class AuthService {
     password: UserEntity['password'],
   ): Promise<UserPublicEntity> {
     try {
-      const user = await this.prismaService.user.findUniqueOrThrow({
-        where: { email },
-        include: { userRegistrationMethod: true },
-      });
+      const user = await this.userService.findOnePrivate({ where: { email } });
 
-      if (user.userRegistrationMethod.name === UserRegistrationMethods.Credentials) {
+      if (user.userRegistrationMethod === UserRegistrationMethods.Credentials) {
         if (!password) {
           throw new AuthException(
             'The provided credentials are invalid. Please verify your email and password and try again.',
@@ -103,17 +104,18 @@ export class AuthService {
     loginWithCredentialsDto: LoginWithCredentialsDto,
   ): Promise<LoginResponse> {
     const { email, password } = loginWithCredentialsDto;
-    const user = await this.prismaService.user.findUniqueOrThrow({
-      where: { email },
-      include: { userRegistrationMethod: true },
-    });
+    const user = await this.userService.findOnePrivate({ where: { email } });
 
-    if (user.userRegistrationMethod?.name !== UserRegistrationMethods.Credentials) {
-      if (
-        !user.password ||
-        !password ||
-        !(await this.passwordService.compare(password, user.password))
-      ) {
+    if (user.userRegistrationMethod !== UserRegistrationMethods.Credentials) {
+      if (!user.password || !password) {
+        throw new AuthException(
+          'The provided credentials are invalid. Please verify your email and password and try again.',
+        );
+      }
+
+      const passwordsAreEqual = await this.passwordService.compare(password, user.password);
+
+      if (!passwordsAreEqual) {
         throw new AuthException(
           'The provided credentials are invalid. Please verify your email and password and try again.',
         );
@@ -140,32 +142,9 @@ export class AuthService {
       const { googleAccessToken } = loginWithGoogleDto;
       const tokenInfo = await this.googleOAuth2Client.getTokenInfo(googleAccessToken);
       const { email } = tokenInfo;
-      let user = await this.prismaService.user.findFirst({ where: { email }, omit: { refreshToken: true, password: true } });
 
-      if (!user) {
-        const userRegistrationMethod = await this.prismaService.userRegistrationMethod.findFirst({
-          where: {
-            name: UserRegistrationMethods.Google,
-          },
-        });
-        const userRole = await this.prismaService.userRole.findFirst({
-          where: {
-            name: UserRoles.User,
-          },
-        });
+      const user = await this.userService.findFirstOrDefault({ where: { email } });
 
-        user = await this.userService.create({
-          email: email!,
-          userRegistrationMethodId: userRegistrationMethod!.id,
-          userRoleId: userRole!.id,
-          firstName: email!.split('@')[0],
-        });
-      }
-      
-      if (!user) {
-        throw new AuthException('Cannot authorize the user. Invalid credentials were provided');
-      }
-      
       const { accessToken, refreshToken } = await this.generateJwtTokensPair(user);
 
       await this.userService.update(user.id, { refreshToken });
@@ -192,31 +171,42 @@ export class AuthService {
         throw new AuthException('Cannot fetch the Discord user info with provided access token');
       }
 
-      const { email, username } = response.data;
-      let user = await this.userService.findOne({
-        where: { email },
-        include: { userRegistrationMethod: true },
-      });
+      const { email } = response.data;
+      const user = await this.userService.findOne({ where: { email } });
 
-      if (!user) {
-        const userRegistrationMethod = await this.prismaService.userRegistrationMethod.findFirst({
-          where: {
-            name: UserRegistrationMethods.Discord,
-          },
-        });
-        const userRole = await this.prismaService.userRole.findFirst({
-          where: {
-            name: UserRoles.User,
-          },
-        });
+      const { accessToken, refreshToken } = await this.generateJwtTokensPair(user);
 
-        user = await this.userService.create({
-          email,
-          userRegistrationMethodId: userRegistrationMethod!.id,
-          userRoleId: userRole!.id,
-          firstName: username,
-        });
+      await this.userService.update(user.id, { refreshToken });
+
+      return { ...user, accessToken, refreshToken };
+    } catch (error) {
+      if (error instanceof AuthException) {
+        throw error;
       }
+
+      throw new AuthException('Cannot authorize the user with provided credentials.');
+    }
+  }
+
+  public async loginWithSolanaWallet(
+    loginWithSolanaWalletDto: LoginWithSolanaWalletDto,
+  ): Promise<LoginResponse> {
+    try {
+      const { solanaWalletAccessToken } = loginWithSolanaWalletDto;
+      const [publicKey, payload, signature] = solanaWalletAccessToken.split('.');
+      const { authMessage } = JSON.parse(new TextDecoder().decode(bs58.decode(payload)));
+
+      try {
+        nacl.sign.detached.verify(
+          new TextEncoder().encode(authMessage),
+          bs58.decode(signature),
+          bs58.decode(publicKey),
+        );
+      } catch (error) {
+        throw new AuthException('Cannot authorize the user with provided credentials.');
+      }
+
+      const user = await this.userService.findOne({ where: { walletPublicKey: publicKey } });
 
       const { accessToken, refreshToken } = await this.generateJwtTokensPair(user);
 
@@ -238,6 +228,7 @@ export class AuthService {
         refreshToken: refreshDto.refreshToken,
       },
     });
+
     const { accessToken, refreshToken } =
       await this.generateJwtTokensPair(userWithValidRefreshToken);
 
@@ -271,13 +262,16 @@ export class AuthService {
         const { tokens } = await this.googleOAuth2Client.getToken(code || '');
         const { email } = await this.googleOAuth2Client.getTokenInfo(tokens.access_token || '');
 
-        const { given_name: firstName, family_name: lastName } = (
-          await this.httpService.axiosRef.get('https://www.googleapis.com/oauth2/v2/userinfo', {
+        const response = await this.httpService.axiosRef.get(
+          'https://www.googleapis.com/oauth2/v2/userinfo',
+          {
             headers: {
               Authorization: `Bearer ${tokens.access_token}`,
             },
-          })
-        ).data;
+          },
+        );
+
+        const { given_name: firstName, family_name: lastName } = response.data;
 
         if (!tokens.access_token || !email) {
           throw new AuthException('Cannot authenticate the user with provided credentials');
@@ -300,7 +294,7 @@ export class AuthService {
           throw error;
         }
 
-        throw new Error('Internal server error');
+        throw new ServerException('Internal server error');
       }
     } catch (error: any) {
       const token = await this.jwtService.sign(
@@ -379,7 +373,7 @@ export class AuthService {
           throw error;
         }
 
-        throw new Error('Internal server error');
+        throw new ServerException('Internal server error');
       }
     } catch (error: any) {
       const token = await this.jwtService.sign(

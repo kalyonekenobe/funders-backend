@@ -26,6 +26,7 @@ import { PostCommentEntity } from 'src/modules/post/submodules/post-comment/enti
 import { PostCommentReactionEntity } from 'src/modules/post/submodules/post-comment/submodules/post-comment-reaction/entities/post-comment-reaction.entity';
 import { $Enums } from '@prisma/client';
 import { UserEntity } from 'src/modules/user/entities/user.entity';
+import { UserReportEntity } from 'src/modules/user/submodules/user-report/entities/user-report.entity';
 
 export class UserPublicEntity implements Omit<UserEntity, 'password' | 'refreshToken'> {
   @ApiProperty({
@@ -192,6 +193,12 @@ export class UserPublicEntity implements Omit<UserEntity, 'password' | 'refreshT
 
   @ApiProperty({ description: 'The nested array of user penalties of this user' })
   userPenalties?: UserPenaltyEntity[];
+
+  @ApiProperty({ description: 'The nested array of incoming user reports of this user' })
+  userReports?: UserReportEntity[];
+
+  @ApiProperty({ description: 'The nested array of outcoming user reports of this user' })
+  outcomingUserReports?: UserReportEntity[];
 
   @ApiProperty({ description: 'The nested array of chats of this user' })
   chats?: ChatEntity[];

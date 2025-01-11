@@ -15,3 +15,9 @@ export enum Permissions {
   ManageUsers = 32,
   ManageUserBans = 64,
 }
+
+export enum UserRoles {
+  User = 'User',
+  Volunteer = 'Volunteer',
+  Administrator = 'Administrator',
+}

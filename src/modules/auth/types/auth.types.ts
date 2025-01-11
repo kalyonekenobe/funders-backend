@@ -1,12 +1,12 @@
-import { User, UserRole } from '@prisma/client';
+import { UserEntity } from 'src/modules/user/entities/user.entity';
 
-export interface LoginResponse extends Omit<User, 'password'> {
+export interface LoginResponse extends Omit<UserEntity, 'password' | 'refreshToken'> {
   accessToken: string;
   refreshToken: string;
   [key: string]: any;
 }
 
-export interface RegisterResponse extends Omit<User, 'password'> {
+export interface RegisterResponse extends Omit<UserEntity, 'password' | 'refreshToken'> {
   accessToken: string;
   refreshToken: string;
   [key: string]: any;
@@ -23,7 +23,7 @@ export interface JwtTokensPairResponse {
 }
 
 export interface JwtTokenPayload {
-  userId: User['id'];
+  userId: UserEntity['id'];
   iat: number;
   exp: number;
   [key: string]: any;

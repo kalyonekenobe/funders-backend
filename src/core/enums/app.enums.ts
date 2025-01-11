@@ -65,6 +65,7 @@ export enum Routes {
   CategoryToPost = 'posts/:id/categories',
   UserRoles = 'user-roles',
   UserPenalties = 'user-penalties',
+  UserReports = 'user-reports',
   Stripe = 'stripe',
 }
 

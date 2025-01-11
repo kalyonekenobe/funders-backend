@@ -14,6 +14,8 @@ import {
 import { PrismaService } from 'src/modules/infrastructure/prisma/prisma.service';
 import { PasswordService } from 'src/modules/infrastructure/password/password.service';
 import { SupabaseService } from 'src/modules/infrastructure/supabase/supabase.service';
+import { UserEntity } from 'src/modules/user/entities/user.entity';
+import { StripeService } from 'src/modules/infrastructure/stripe/stripe.service';
 
 @Injectable()
 export class UserService {
@@ -21,6 +23,7 @@ export class UserService {
     private readonly prismaService: PrismaService,
     private readonly passwordService: PasswordService,
     private readonly supabaseService: SupabaseService,
+    private readonly stripeService: StripeService,
   ) {}
 
   public async findAll(options?: Prisma.UserFindManyArgs): Promise<UserPublicEntity[]> {
@@ -35,6 +38,16 @@ export class UserService {
     );
   }
 
+  public async findFirstOrDefault(options: Prisma.UserFindFirstArgs): Promise<UserPublicEntity> {
+    return this.prismaService.user.findFirstOrThrow(
+      _.merge(options, { omit: { password: true, refreshToken: true } }),
+    );
+  }
+
+  public async findOnePrivate(options: Prisma.UserFindUniqueOrThrowArgs): Promise<UserEntity> {
+    return this.prismaService.user.findUniqueOrThrow(options);
+  }
+
   public async create(
     data: CreateUserDto,
     files?: CreateUserUploadedFiles,
@@ -43,8 +56,16 @@ export class UserService {
       data.password = await this.passwordService.hash(data.password);
     }
 
+    const stripeCustomer = await this.stripeService.createStripeCustomer({
+      name: `${data.firstName} ${data.lastName}`,
+      email: data.email,
+    });
+
     return this.prismaService.user
-      .create({ data, omit: { password: true, refreshToken: true } })
+      .create({
+        data: { ...data, stripeCustomerId: stripeCustomer.id },
+        omit: { password: true, refreshToken: true },
+      })
       .then(user => {
         if (files?.image?.length) {
           const image = files?.image[0];

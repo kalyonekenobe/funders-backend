@@ -25,6 +25,7 @@ import { PostReactionEntity } from 'src/modules/post/submodules/post-reaction/en
 import { FollowingEntity } from 'src/modules/user/submodules/following/entities/following.entity';
 import { UserRoleEntity } from 'src/modules/user/submodules/user-role/entities/user-role.entity';
 import { UserPenaltyEntity } from 'src/modules/user/submodules/user-penalty/entities/user-penalty.entity';
+import { UserReportEntity } from 'src/modules/user/submodules/user-report/entities/user-report.entity';
 
 export class UserEntity implements User {
   @ApiProperty({
@@ -217,6 +218,12 @@ export class UserEntity implements User {
 
   @ApiProperty({ description: 'The nested array of user penalties of this user' })
   userPenalties?: UserPenaltyEntity[];
+
+  @ApiProperty({ description: 'The nested array of incoming user reports of this user' })
+  userReports?: UserReportEntity[];
+
+  @ApiProperty({ description: 'The nested array of outcoming user reports of this user' })
+  outcomingUserReports?: UserReportEntity[];
 
   @ApiProperty({ description: 'The nested array of chats of this user' })
   chats?: ChatEntity[];

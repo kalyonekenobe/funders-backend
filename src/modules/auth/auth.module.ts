@@ -1,33 +1,14 @@
 import { Module } from '@nestjs/common';
-import { PrismaModule } from '../infrastructure/prisma/prisma.module';
-import { PasswordModule } from '../infrastructure/password/password.module';
-import { AuthController } from './auth.controller';
-import { AuthService } from './auth.service';
-import { JwtModule } from '@nestjs/jwt';
-import { JwtStrategy } from './strategies/jwt.strategy';
-import { LocalStrategy } from './strategies/local.strategy';
-import { UserModule } from 'src/user/user.module';
-import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
 import { HttpModule } from '@nestjs/axios';
+import { AuthController } from 'src/modules/auth/auth.controller';
+import { AuthService } from 'src/modules/auth/auth.service';
+import { LocalStrategy } from 'src/modules/auth/strategies/local.strategy';
+import { JwtStrategy } from 'src/modules/auth/strategies/jwt.strategy';
+import { JwtRefreshStrategy } from 'src/modules/auth/strategies/jwt-refresh.strategy';
 
 @Module({
-  imports: [
-    PrismaModule,
-    PasswordModule.forRoot(
-      process.env.USER_PASSWORD_SALT_PREFIX || '',
-      process.env.USER_PASSWORD_SALT_SUFFIX || '',
-    ),
-    JwtModule.register({
-      secret: process.env.JWT_SECRET,
-      signOptions: {
-        expiresIn: process.env.JWT_ACCESS_TOKEN_DURATION,
-      },
-    }),
-    UserModule,
-    HttpModule,
-  ],
+  imports: [HttpModule],
   controllers: [AuthController],
   providers: [AuthService, LocalStrategy, JwtStrategy, JwtRefreshStrategy],
-  exports: [AuthService],
 })
 export class AuthModule {}

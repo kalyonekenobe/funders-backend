@@ -13,6 +13,7 @@ export const RoutesApiTags = {
   [Routes.Followings]: 'Followings',
   [Routes.CategoryToPost]: 'Posts',
   [Routes.UserPenalties]: 'User penalties',
+  [Routes.UserReports]: 'User reports',
   [Routes.UserRoles]: 'User roles',
   [Routes.Stripe]: 'Stripe',
 };

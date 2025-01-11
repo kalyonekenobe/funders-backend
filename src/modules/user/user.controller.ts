@@ -55,6 +55,9 @@ import { UpdateUserDto } from 'src/modules/user/DTO/update-user.dto';
 import { RoutesApiTags } from 'src/core/constants';
 import { Routes } from 'src/core/enums/app.enums';
 import { CreateUserPenaltyDto } from 'src/modules/user/submodules/user-penalty/DTO/create-user-penalty.dto';
+import { UserReportService } from 'src/modules/user/submodules/user-report/user-report.service';
+import { UserReportEntity } from 'src/modules/user/submodules/user-report/entities/user-report.entity';
+import { CreateUserReportDto } from 'src/modules/user/submodules/user-report/DTO/create-user-report.dto';
 
 @ApiTags(RoutesApiTags[Routes.Users])
 @Controller(Routes.Users)
@@ -62,6 +65,7 @@ export class UserController {
   constructor(
     private readonly userService: UserService,
     private readonly userPenaltyService: UserPenaltyService,
+    private readonly userReportService: UserReportService,
     private readonly postService: PostService,
     private readonly postReactionService: PostReactionService,
     private readonly postCommentService: PostCommentService,
@@ -109,6 +113,77 @@ export class UserController {
     @Body() createUserPenaltyDto: CreateUserPenaltyDto,
   ): Promise<UserPenaltyEntity> {
     return this.userPenaltyService.create({ ...createUserPenaltyDto, userId });
+  }
+
+  @Auth(JwtAuthGuard)
+  @ApiCreatedResponse({
+    description: 'User report was successfully created.',
+    type: UserReportEntity,
+  })
+  @ApiUnauthorizedResponse({ description: 'The user is unauthorized.' })
+  @ApiForbiddenResponse({ description: 'The user is forbidden to perform this action.' })
+  @ApiConflictResponse({
+    description: 'Cannot create user report. Invalid data was provided.',
+  })
+  @ApiInternalServerErrorResponse({ description: 'Internal server error was occured.' })
+  @ApiParam({
+    name: 'id',
+    description: 'The id of the user who is the reporter',
+    schema: { example: '23fbed56-1bb9-40a0-8977-2dd0f0c6c31f' },
+  })
+  @Post(':id/reports')
+  public async createUserReport(
+    @AuthenticatedUser() authenticatedUser: UserPenaltyEntity,
+    @Param('id') reporterId: string,
+    @Body() createUserReportDto: CreateUserReportDto,
+  ): Promise<UserReportEntity> {
+    if (authenticatedUser.id !== reporterId) {
+      throw new ForbiddenException(
+        'You are forbidden to perform this action. The authenticated user id is different from the reporter user id.',
+      );
+    }
+
+    return this.userReportService.create({ ...createUserReportDto, reporterId });
+  }
+
+  @Auth(JwtAuthGuard)
+  @ApiOkResponse({ description: 'The list of user incoming reports', type: [UserReportEntity] })
+  @ApiUnauthorizedResponse({ description: 'The user is unauthorized.' })
+  @ApiForbiddenResponse({ description: 'The user is forbidden to perform this action.' })
+  @ApiInternalServerErrorResponse({ description: 'Internal server error was occured.' })
+  @ApiParam({
+    name: 'id',
+    description: 'The id of the user for whom to show the list of incoming reports',
+    schema: { example: '23fbed56-1bb9-40a0-8977-2dd0f0c6c31f' },
+  })
+  @Get(':id/reports/incoming')
+  public async findAllUserIncomingReports(
+    @Param('id') userId: string,
+    @Query() query: Record<string, string>,
+  ): Promise<UserReportEntity[]> {
+    return this.userReportService.findAll(
+      _.merge(deserializeQueryString(query), { where: { userId } }),
+    );
+  }
+
+  @Auth(JwtAuthGuard)
+  @ApiOkResponse({ description: 'The list of user outcoming reports', type: [UserReportEntity] })
+  @ApiUnauthorizedResponse({ description: 'The user is unauthorized.' })
+  @ApiForbiddenResponse({ description: 'The user is forbidden to perform this action.' })
+  @ApiInternalServerErrorResponse({ description: 'Internal server error was occured.' })
+  @ApiParam({
+    name: 'id',
+    description: 'The id of the user for whom to show the list of outcoming reports',
+    schema: { example: '23fbed56-1bb9-40a0-8977-2dd0f0c6c31f' },
+  })
+  @Get(':id/reports/outcoming')
+  public async findAllUserOutcomingReports(
+    @Param('id') reporterId: string,
+    @Query() query: Record<string, string>,
+  ): Promise<UserReportEntity[]> {
+    return this.userReportService.findAll(
+      _.merge(deserializeQueryString(query), { where: { reporterId } }),
+    );
   }
 
   @Auth(JwtAuthGuard)
