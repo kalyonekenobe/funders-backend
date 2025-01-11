@@ -1,0 +1,429 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x", "linux-musl"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("POSTGRES_URL")
+}
+
+enum UserRegistrationMethods {
+  Credentials
+  Google
+  Discord
+  SolanaWallet
+}
+
+enum PostReactions {
+  Like
+  Dislike
+  Laugh
+  Anger
+  Heart
+  Crying
+}
+
+enum PostCommentReactions {
+  Like
+  Dislike
+  Laugh
+  Anger
+  Heart
+  Crying
+}
+
+enum ChatMessageReactions {
+  Like
+  Dislike
+  Laugh
+  Anger
+  Heart
+  Crying
+}
+
+enum ChatMessageStatuses {
+  Sent
+  Delivered
+  Read
+}
+
+enum UserReportReasons {
+  Spam
+  Cheating
+  Herrasment
+  Impersonation
+  InappropriateProfile
+  Other
+}
+
+enum PostReportReasons {
+  Spam
+  Cheating
+  HateSpeach
+  InappropriateContent
+  Violence
+  Copyright
+  Other
+}
+
+enum PostCommentReportReasons {
+  Spam
+  HateSpeach
+  InappropriateContent
+  Herrasment
+  Other
+}
+
+enum UserReportStatuses {
+  OnReview
+  AppliedPenalties
+  NoViolationsFound
+}
+
+enum PostReportStatuses {
+  OnReview
+  AppliedPenalties
+  NoViolationsFound
+}
+
+enum PostCommentReportStatuses {
+  OnReview
+  AppliedPenalties
+  NoViolationsFound
+}
+
+model UserRole {
+  name        String   @id @db.VarChar(50)
+  permissions BigInt   @default(0)
+  createdAt   DateTime @default(now()) @db.Timestamptz
+  updatedAt   DateTime @default(now()) @updatedAt
+
+  users User[]
+
+  @@index([name, permissions])
+}
+
+model User {
+  id                     String                  @id @default(uuid())
+  userRegistrationMethod UserRegistrationMethods @default(Credentials)
+  role                   String                  @db.VarChar(50)
+  firstName              String                  @db.VarChar(50)
+  lastName               String                  @db.VarChar(50)
+  birthDate              DateTime                @db.Timestamptz
+  email                  String                  @unique @db.VarChar(50)
+  password               String?                 @db.Text
+  phone                  String?                 @db.VarChar(15)
+  bio                    String?                 @db.Text
+  image                  String?                 @db.VarChar(255)
+  walletPublicKey        String?                 @unique @db.VarChar(255)
+  refreshToken           String?                 @db.Text
+  stripeCustomerId       String                  @db.VarChar(255)
+  createdAt              DateTime                @default(now()) @db.Timestamptz
+  updatedAt              DateTime                @updatedAt @db.Timestamptz
+
+  userRole                    UserRole              @relation(fields: [role], references: [name], onDelete: NoAction, onUpdate: Cascade)
+  followings                  Following[]           @relation("FollowerUser")
+  followers                   Following[]           @relation("FollowedUser")
+  userReports                 UserReport[]          @relation("ReportedUser")
+  outcomingUserReports        UserReport[]          @relation("ReporterUserToUser")
+  outcomingPostReports        PostReport[]          @relation("ReporterUserToPost")
+  outcomingPostCommentReports PostCommentReport[]   @relation("ReporterUserToPostComment")
+  userPenalties               UserPenalty[]
+  chatsToUsers                ChatToUser[]
+  messages                    ChatMessage[]
+  posts                       Post[]
+  postReactions               PostReaction[]
+  postComments                PostComment[]
+  postCommentReactions        PostCommentReaction[]
+
+  @@index([email, walletPublicKey, role, stripeCustomerId, userRegistrationMethod])
+}
+
+model UserPenalty {
+  id                 String    @id @default(uuid())
+  userId             String    @db.Uuid
+  dueTo              DateTime? @db.Timestamptz
+  note               String    @db.Text
+  permissionsPenalty BigInt    @db.BigInt
+  createdAt          DateTime  @default(now()) @db.Timestamptz
+  updatedAt          DateTime  @updatedAt @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([userId, dueTo, createdAt, updatedAt])
+}
+
+model UserReport {
+  id         String             @id @default(uuid()) @db.Uuid
+  reporterId String             @db.Uuid
+  userId     String             @db.Uuid
+  reason     UserReportReasons
+  status     UserReportStatuses
+  note       String?            @db.Text
+  createdAt  DateTime           @default(now()) @db.Timestamptz
+  updatedAt  DateTime           @default(now()) @updatedAt
+
+  reporter User @relation("ReporterUserToUser", fields: [reporterId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  user     User @relation("ReportedUser", fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([reporterId, userId, reason])
+}
+
+model Following {
+  userId     String   @db.Uuid
+  followerId String   @db.Uuid
+  createdAt  DateTime @default(now()) @db.Timestamptz
+  updatedAt  DateTime @default(now()) @updatedAt
+
+  user     User @relation("FollowedUser", fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  follower User @relation("FollowerUser", fields: [followerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@id(fields: [userId, followerId])
+  @@index([userId, followerId])
+}
+
+model Chat {
+  id          String   @id @default(uuid())
+  name        String?  @db.VarChar(255)
+  image       String?  @db.Text
+  description String?  @db.Text
+  createdAt   DateTime @default(now()) @db.Timestamptz
+  updatedAt   DateTime @default(now()) @updatedAt
+
+  chatsToUsers ChatToUser[]
+  messages     ChatMessage[]
+
+  @@index([name])
+}
+
+model ChatRole {
+  name        String   @id @db.VarChar(50)
+  permissions BigInt   @default(0)
+  createdAt   DateTime @default(now()) @db.Timestamptz
+  updatedAt   DateTime @default(now()) @updatedAt
+
+  chatsToUsers ChatToUser[]
+
+  @@index([name, permissions])
+}
+
+model ChatMessageAttachment {
+  id        String   @id @default(uuid())
+  messageId String   @db.Uuid
+  location  String   @db.Text
+  filename  String?  @db.VarChar(255)
+  createdAt DateTime @default(now()) @db.Timestamptz
+  updatedAt DateTime @default(now()) @updatedAt
+
+  message ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([messageId])
+}
+
+model ChatMessage {
+  id              String              @id @default(uuid())
+  chatId          String              @db.Uuid
+  authorId        String              @db.Uuid
+  parentMessageId String?             @db.Uuid
+  content         String              @db.Text
+  isPinned        Boolean             @default(false) @db.Boolean
+  status          ChatMessageStatuses
+  createdAt       DateTime            @default(now()) @db.Timestamptz
+  updatedAt       DateTime            @updatedAt @db.Timestamptz
+  removedAt       DateTime?           @db.Timestamptz
+
+  chat          Chat                    @relation(fields: [chatId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  author        User                    @relation(fields: [authorId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  parentMessage ChatMessage?            @relation("ParentMessage", fields: [parentMessageId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  replies       ChatMessage[]           @relation("ParentMessage")
+  attachments   ChatMessageAttachment[]
+
+  @@index([chatId, authorId, isPinned, createdAt])
+}
+
+model ChatToUser {
+  chatId                   String   @db.Uuid
+  userId                   String   @db.Uuid
+  role                     String   @db.VarChar(50)
+  lastSeenMessageTimestamp DateTime @default(now()) @db.Timestamptz
+  createdAt                DateTime @default(now()) @db.Timestamptz
+  updatedAt                DateTime @updatedAt @db.Timestamptz
+
+  chat     Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  chatRole ChatRole @relation(fields: [role], references: [name], onDelete: NoAction, onUpdate: Cascade)
+
+  @@id([chatId, userId])
+  @@index([chatId, userId, lastSeenMessageTimestamp])
+}
+
+model Post {
+  id              String    @id @default(uuid())
+  authorId        String    @db.Uuid
+  title           String    @db.VarChar(255)
+  content         String    @db.Text
+  fundsToBeRaised Decimal   @db.Money
+  deadline        DateTime? @db.Timestamptz
+  image           String?   @db.VarChar(255)
+  isDraft         Boolean   @default(false) @db.Boolean
+  createdAt       DateTime  @default(now()) @db.Timestamptz
+  updatedAt       DateTime  @updatedAt @db.Timestamptz
+  removedAt       DateTime? @db.Timestamptz
+
+  author            User             @relation(fields: [authorId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  reports           PostReport[]     @relation("ReportedPost")
+  categoriesToPosts CategoryToPost[]
+  donations         PostDonation[]
+  reactions         PostReaction[]
+  comments          PostComment[]
+  attachments       PostAttachment[]
+
+  @@index([authorId, title, isDraft])
+}
+
+model PostReport {
+  id         String             @id @default(uuid()) @db.Uuid
+  reporterId String             @db.Uuid
+  postId     String             @db.Uuid
+  reason     PostReportReasons
+  status     PostReportStatuses
+  note       String?            @db.Text
+  createdAt  DateTime           @default(now()) @db.Timestamptz
+  updatedAt  DateTime           @default(now()) @updatedAt
+
+  reporter User @relation("ReporterUserToPost", fields: [reporterId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  post     Post @relation("ReportedPost", fields: [postId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([reporterId, postId, reason])
+}
+
+model PostCategory {
+  name      String   @id @db.VarChar(50)
+  createdAt DateTime @default(now()) @db.Timestamptz
+  updatedAt DateTime @updatedAt @db.Timestamptz
+
+  categoriesToPosts CategoryToPost[]
+
+  @@index([name])
+}
+
+model PostAttachment {
+  id        String   @id @default(uuid())
+  postId    String   @db.Uuid
+  location  String   @db.Text
+  filename  String?  @db.VarChar(255)
+  createdAt DateTime @default(now()) @db.Timestamptz
+  updatedAt DateTime @updatedAt @db.Timestamptz
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([postId])
+}
+
+model PostDonation {
+  id        String   @id @default(uuid())
+  postId    String   @db.Uuid
+  details   Json     @default("{}") @db.Json
+  amount    Decimal  @db.Money
+  createdAt DateTime @default(now()) @db.Timestamptz
+  updatedAt DateTime @updatedAt @db.Timestamptz
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([postId, amount])
+}
+
+model PostReaction {
+  userId    String        @db.Uuid
+  postId    String        @db.Uuid
+  reaction  PostReactions
+  createdAt DateTime      @default(now()) @db.Timestamptz
+  updatedAt DateTime      @updatedAt @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@id([userId, postId])
+  @@index([userId, postId, reaction])
+}
+
+model PostComment {
+  id              String    @id @default(uuid())
+  postId          String    @db.Uuid
+  authorId        String    @db.Uuid
+  parentCommentId String?   @db.Uuid
+  content         String    @db.Text
+  createdAt       DateTime  @default(now()) @db.Timestamptz
+  updatedAt       DateTime  @updatedAt @db.Timestamptz
+  removedAt       DateTime? @db.Timestamptz
+
+  post          Post                    @relation(fields: [postId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  author        User                    @relation(fields: [authorId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  parentComment PostComment?            @relation("ParentComment", fields: [parentCommentId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  replies       PostComment[]           @relation("ParentComment")
+  reports       PostCommentReport[]     @relation("ReportedPostComment")
+  reactions     PostCommentReaction[]
+  attachments   PostCommentAttachment[]
+
+  @@index([postId, authorId, parentCommentId])
+}
+
+model PostCommentReport {
+  id            String                    @id @default(uuid()) @db.Uuid
+  reporterId    String                    @db.Uuid
+  postCommentId String                    @db.Uuid
+  reason        PostCommentReportReasons
+  status        PostCommentReportStatuses
+  note          String?                   @db.Text
+  createdAt     DateTime                  @default(now()) @db.Timestamptz
+  updatedAt     DateTime                  @default(now()) @updatedAt
+
+  reporter    User        @relation("ReporterUserToPostComment", fields: [reporterId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  postComment PostComment @relation("ReportedPostComment", fields: [postCommentId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([reporterId, postCommentId, reason])
+}
+
+model PostCommentReaction {
+  commentId String               @db.Uuid
+  userId    String               @db.Uuid
+  reaction  PostCommentReactions
+  createdAt DateTime             @default(now()) @db.Timestamptz
+  updatedAt DateTime             @updatedAt @db.Timestamptz
+
+  comment PostComment @relation(fields: [commentId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  user    User        @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@id([commentId, userId])
+  @@index([commentId, userId, reaction])
+}
+
+model PostCommentAttachment {
+  id        String   @id @default(uuid())
+  commentId String   @db.Uuid
+  location  String   @db.Text
+  filename  String?  @db.VarChar(255)
+  createdAt DateTime @default(now()) @db.Timestamptz
+  updatedAt DateTime @updatedAt @db.Timestamptz
+
+  comment PostComment @relation(fields: [commentId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([commentId])
+}
+
+model CategoryToPost {
+  postId    String   @db.Uuid
+  category  String   @db.VarChar(50)
+  createdAt DateTime @default(now()) @db.Timestamptz
+  updatedAt DateTime @updatedAt @db.Timestamptz
+
+  post         Post         @relation(fields: [postId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  postCategory PostCategory @relation(fields: [category], references: [name], onDelete: NoAction, onUpdate: Cascade)
+
+  @@id([postId, category])
+  @@index([postId, category])
+}
