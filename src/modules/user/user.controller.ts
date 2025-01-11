@@ -119,10 +119,10 @@ export class UserController {
   @ApiInternalServerErrorResponse({ description: 'Internal server error was occured.' })
   @ApiParam({
     name: 'id',
-    description: 'The id of the user to get his list of bans',
+    description: 'The id of the user to get his list of user penalties',
     schema: { example: '23fbed56-1bb9-40a0-8977-2dd0f0c6c31f' },
   })
-  @Get(':id/bans')
+  @Get(':id/penalties')
   public async findAllUserBans(
     @Param('id') userId: string,
     @Query() query?: Record<string, string>,

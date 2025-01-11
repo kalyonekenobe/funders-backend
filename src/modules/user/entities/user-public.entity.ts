@@ -1,5 +1,4 @@
 import { Transform } from 'class-transformer';
-import { UserEntity } from './user.entity';
 import { ApiProperty } from '@nestjs/swagger';
 import {
   IsDate,
@@ -26,6 +25,7 @@ import { PostDonationEntity } from 'src/modules/post/submodules/post-donation/en
 import { PostCommentEntity } from 'src/modules/post/submodules/post-comment/entities/post-comment.entity';
 import { PostCommentReactionEntity } from 'src/modules/post/submodules/post-comment/submodules/post-comment-reaction/entities/post-comment-reaction.entity';
 import { $Enums } from '@prisma/client';
+import { UserEntity } from 'src/modules/user/entities/user.entity';
 
 export class UserPublicEntity implements Omit<UserEntity, 'password' | 'refreshToken'> {
   @ApiProperty({
@@ -190,8 +190,8 @@ export class UserPublicEntity implements Omit<UserEntity, 'password' | 'refreshT
   @ApiProperty({ description: 'The nested array of followers of this user' })
   followers?: FollowingEntity[];
 
-  @ApiProperty({ description: 'The nested array of bans of this user' })
-  bans?: UserPenaltyEntity[];
+  @ApiProperty({ description: 'The nested array of user penalties of this user' })
+  userPenalties?: UserPenaltyEntity[];
 
   @ApiProperty({ description: 'The nested array of chats of this user' })
   chats?: ChatEntity[];

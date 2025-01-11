@@ -215,8 +215,8 @@ export class UserEntity implements User {
   @ApiProperty({ description: 'The nested array of followers of this user' })
   followers?: FollowingEntity[];
 
-  @ApiProperty({ description: 'The nested array of bans of this user' })
-  bans?: UserPenaltyEntity[];
+  @ApiProperty({ description: 'The nested array of user penalties of this user' })
+  userPenalties?: UserPenaltyEntity[];
 
   @ApiProperty({ description: 'The nested array of chats of this user' })
   chats?: ChatEntity[];

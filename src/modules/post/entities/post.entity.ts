@@ -125,7 +125,7 @@ export class PostEntity implements Post {
   @MaxDate(new Date())
   @IsNotEmpty()
   @IsDefined()
-  updatedAt: Date | null;
+  updatedAt: Date;
 
   @ApiProperty({
     description: 'The date and time the post was removed',

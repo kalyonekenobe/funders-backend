@@ -10,7 +10,7 @@ import {
   Max,
   ValidateIf,
 } from 'class-validator';
-import { UserPenaltyEntity } from '../entities/user-penalty.entity';
+import { UserPenaltyEntity } from 'src/modules/user/submodules/user-penalty/entities/user-penalty.entity';
 
 export class CreateUserPenaltyDto
   implements Pick<UserPenaltyEntity, 'userId' | 'dueTo' | 'note' | 'permissionsPenalty'>

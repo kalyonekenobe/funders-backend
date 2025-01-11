@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { IsDate, IsNotEmpty, IsNumber, IsString, Max, ValidateIf } from 'class-validator';
-import { UserPenaltyEntity } from '../entities/user-penalty.entity';
+import { UserPenaltyEntity } from 'src/modules/user/submodules/user-penalty/entities/user-penalty.entity';
 
 export class UpdateUserPenaltyDto
   implements Pick<Partial<UserPenaltyEntity>, 'dueTo' | 'note' | 'permissionsPenalty'>

@@ -1,8 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsDefined, IsNotEmpty, IsUUID } from 'class-validator';
-import { FollowingEntity } from '../entities/following.entity';
+import { FollowingEntity } from 'src/modules/user/submodules/following/entities/following.entity';
 
-export class CreateFollowingDto implements FollowingEntity {
+export class CreateFollowingDto implements Pick<FollowingEntity, 'userId' | 'followerId'> {
   @ApiProperty({
     description: "User's uuid",
     examples: ['b7af9cd4-5533-4737-862b-78bce985c987', '989d32c2-abd4-43d3-a420-ee175ae16b98'],
