@@ -8,7 +8,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("POSTGRES_URL")
+  url      = env("DATABASE_URL")
 }
 
 enum UserRegistrationMethods {
@@ -47,7 +47,6 @@ enum ChatMessageReactions {
 
 enum ChatMessageStatuses {
   Sent
-  Delivered
   Read
 }
 
@@ -96,11 +95,30 @@ enum PostCommentReportStatuses {
   NoViolationsFound
 }
 
+enum ChatTypes {
+  Private
+  Group
+  Supergroup
+  Channel
+}
+
+enum UserRoles {
+  User
+  Volunteer
+  Administrator
+}
+
+enum ChatRoles {
+  User
+  Moderator
+  Administrator
+}
+
 model UserRole {
-  name        String   @id @db.VarChar(50)
-  permissions BigInt   @default(0)
-  createdAt   DateTime @default(now()) @db.Timestamptz
-  updatedAt   DateTime @default(now()) @updatedAt
+  name        UserRoles @id
+  permissions BigInt    @default(0)
+  createdAt   DateTime  @default(now()) @db.Timestamptz
+  updatedAt   DateTime  @updatedAt @db.Timestamptz
 
   users User[]
 
@@ -108,9 +126,9 @@ model UserRole {
 }
 
 model User {
-  id                     String                  @id @default(uuid())
+  id                     String                  @id @default(uuid()) @db.Uuid
   userRegistrationMethod UserRegistrationMethods @default(Credentials)
-  role                   String                  @db.VarChar(50)
+  role                   UserRoles               @default(User)
   firstName              String                  @db.VarChar(50)
   lastName               String                  @db.VarChar(50)
   birthDate              DateTime                @db.Timestamptz
@@ -118,7 +136,7 @@ model User {
   password               String?                 @db.Text
   phone                  String?                 @db.VarChar(15)
   bio                    String?                 @db.Text
-  image                  String?                 @db.VarChar(255)
+  image                  String?                 @db.Text
   walletPublicKey        String?                 @unique @db.VarChar(255)
   refreshToken           String?                 @db.Text
   stripeCustomerId       String                  @db.VarChar(255)
@@ -135,6 +153,7 @@ model User {
   userPenalties               UserPenalty[]
   chatsToUsers                ChatToUser[]
   messages                    ChatMessage[]
+  chatMessageReactions        ChatMessageReaction[]
   posts                       Post[]
   postReactions               PostReaction[]
   postComments                PostComment[]
@@ -144,7 +163,7 @@ model User {
 }
 
 model UserPenalty {
-  id                 String    @id @default(uuid())
+  id                 String    @id @default(uuid()) @db.Uuid
   userId             String    @db.Uuid
   dueTo              DateTime? @db.Timestamptz
   note               String    @db.Text
@@ -165,7 +184,7 @@ model UserReport {
   status     UserReportStatuses @default(OnReview)
   note       String?            @db.Text
   createdAt  DateTime           @default(now()) @db.Timestamptz
-  updatedAt  DateTime           @default(now()) @updatedAt
+  updatedAt  DateTime           @updatedAt @db.Timestamptz
 
   reporter User @relation("ReporterUserToUser", fields: [reporterId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   user     User @relation("ReportedUser", fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
@@ -177,7 +196,7 @@ model Following {
   userId     String   @db.Uuid
   followerId String   @db.Uuid
   createdAt  DateTime @default(now()) @db.Timestamptz
-  updatedAt  DateTime @default(now()) @updatedAt
+  updatedAt  DateTime @updatedAt @db.Timestamptz
 
   user     User @relation("FollowedUser", fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   follower User @relation("FollowerUser", fields: [followerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
@@ -187,12 +206,13 @@ model Following {
 }
 
 model Chat {
-  id          String   @id @default(uuid())
-  name        String?  @db.VarChar(255)
-  image       String?  @db.Text
-  description String?  @db.Text
-  createdAt   DateTime @default(now()) @db.Timestamptz
-  updatedAt   DateTime @default(now()) @updatedAt
+  id          String    @id @default(uuid()) @db.Uuid
+  name        String?   @db.VarChar(255)
+  type        ChatTypes @default(Private)
+  image       String?   @db.Text
+  description String?   @db.Text
+  createdAt   DateTime  @default(now()) @db.Timestamptz
+  updatedAt   DateTime  @updatedAt @db.Timestamptz
 
   chatsToUsers ChatToUser[]
   messages     ChatMessage[]
@@ -201,10 +221,10 @@ model Chat {
 }
 
 model ChatRole {
-  name        String   @id @db.VarChar(50)
-  permissions BigInt   @default(0)
-  createdAt   DateTime @default(now()) @db.Timestamptz
-  updatedAt   DateTime @default(now()) @updatedAt
+  name        ChatRoles @id
+  permissions BigInt    @default(0)
+  createdAt   DateTime  @default(now()) @db.Timestamptz
+  updatedAt   DateTime  @updatedAt @db.Timestamptz
 
   chatsToUsers ChatToUser[]
 
@@ -212,12 +232,12 @@ model ChatRole {
 }
 
 model ChatMessageAttachment {
-  id        String   @id @default(uuid())
+  id        String   @id @default(uuid()) @db.Uuid
   messageId String   @db.Uuid
   location  String   @db.Text
   filename  String?  @db.VarChar(255)
   createdAt DateTime @default(now()) @db.Timestamptz
-  updatedAt DateTime @default(now()) @updatedAt
+  updatedAt DateTime @updatedAt @db.Timestamptz
 
   message ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
@@ -225,13 +245,13 @@ model ChatMessageAttachment {
 }
 
 model ChatMessage {
-  id              String              @id @default(uuid())
+  id              String              @id @default(uuid()) @db.Uuid
   chatId          String              @db.Uuid
   authorId        String              @db.Uuid
   parentMessageId String?             @db.Uuid
   content         String              @db.Text
   isPinned        Boolean             @default(false) @db.Boolean
-  status          ChatMessageStatuses
+  status          ChatMessageStatuses @default(Sent)
   createdAt       DateTime            @default(now()) @db.Timestamptz
   updatedAt       DateTime            @updatedAt @db.Timestamptz
   removedAt       DateTime?           @db.Timestamptz
@@ -241,17 +261,33 @@ model ChatMessage {
   parentMessage ChatMessage?            @relation("ParentMessage", fields: [parentMessageId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   replies       ChatMessage[]           @relation("ParentMessage")
   attachments   ChatMessageAttachment[]
+  reactions     ChatMessageReaction[]
 
   @@index([chatId, authorId, isPinned, createdAt])
 }
 
+model ChatMessageReaction {
+  messageId String               @db.Uuid
+  userId    String               @db.Uuid
+  reaction  ChatMessageReactions
+  createdAt DateTime             @default(now()) @db.Timestamptz
+  updatedAt DateTime             @updatedAt @db.Timestamptz
+
+  chatMessage ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@id([messageId, userId])
+  @@index([messageId, userId, reaction])
+}
+
 model ChatToUser {
-  chatId                   String   @db.Uuid
-  userId                   String   @db.Uuid
-  role                     String   @db.VarChar(50)
-  lastSeenMessageTimestamp DateTime @default(now()) @db.Timestamptz
-  createdAt                DateTime @default(now()) @db.Timestamptz
-  updatedAt                DateTime @updatedAt @db.Timestamptz
+  chatId                   String    @db.Uuid
+  userId                   String    @db.Uuid
+  role                     ChatRoles @default(User)
+  isArchived               Boolean   @default(false) @db.Boolean
+  lastSeenMessageTimestamp DateTime  @default(now()) @db.Timestamptz
+  createdAt                DateTime  @default(now()) @db.Timestamptz
+  updatedAt                DateTime  @updatedAt @db.Timestamptz
 
   chat     Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
@@ -262,13 +298,13 @@ model ChatToUser {
 }
 
 model Post {
-  id              String    @id @default(uuid())
+  id              String    @id @default(uuid()) @db.Uuid
   authorId        String    @db.Uuid
   title           String    @db.VarChar(255)
   content         String    @db.Text
   fundsToBeRaised Decimal   @db.Money
   deadline        DateTime? @db.Timestamptz
-  image           String?   @db.VarChar(255)
+  image           String?   @db.Text
   isDraft         Boolean   @default(false) @db.Boolean
   createdAt       DateTime  @default(now()) @db.Timestamptz
   updatedAt       DateTime  @updatedAt @db.Timestamptz
@@ -293,7 +329,7 @@ model PostReport {
   status     PostReportStatuses @default(OnReview)
   note       String?            @db.Text
   createdAt  DateTime           @default(now()) @db.Timestamptz
-  updatedAt  DateTime           @default(now()) @updatedAt
+  updatedAt  DateTime           @updatedAt @db.Timestamptz
 
   reporter User @relation("ReporterUserToPost", fields: [reporterId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   post     Post @relation("ReportedPost", fields: [postId], references: [id], onDelete: Cascade, onUpdate: Cascade)
@@ -312,7 +348,7 @@ model PostCategory {
 }
 
 model PostAttachment {
-  id        String   @id @default(uuid())
+  id        String   @id @default(uuid()) @db.Uuid
   postId    String   @db.Uuid
   location  String   @db.Text
   filename  String?  @db.VarChar(255)
@@ -325,7 +361,7 @@ model PostAttachment {
 }
 
 model PostDonation {
-  id        String   @id @default(uuid())
+  id        String   @id @default(uuid()) @db.Uuid
   postId    String   @db.Uuid
   details   Json     @default("{}") @db.Json
   amount    Decimal  @db.Money
@@ -352,7 +388,7 @@ model PostReaction {
 }
 
 model PostComment {
-  id              String    @id @default(uuid())
+  id              String    @id @default(uuid()) @db.Uuid
   postId          String    @db.Uuid
   authorId        String    @db.Uuid
   parentCommentId String?   @db.Uuid
@@ -380,7 +416,7 @@ model PostCommentReport {
   status        PostCommentReportStatuses @default(OnReview)
   note          String?                   @db.Text
   createdAt     DateTime                  @default(now()) @db.Timestamptz
-  updatedAt     DateTime                  @default(now()) @updatedAt
+  updatedAt     DateTime                  @updatedAt @db.Timestamptz
 
   reporter    User        @relation("ReporterUserToPostComment", fields: [reporterId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   postComment PostComment @relation("ReportedPostComment", fields: [postCommentId], references: [id], onDelete: Cascade, onUpdate: Cascade)
@@ -403,7 +439,7 @@ model PostCommentReaction {
 }
 
 model PostCommentAttachment {
-  id        String   @id @default(uuid())
+  id        String   @id @default(uuid()) @db.Uuid
   commentId String   @db.Uuid
   location  String   @db.Text
   filename  String?  @db.VarChar(255)

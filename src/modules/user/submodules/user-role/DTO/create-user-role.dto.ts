@@ -1,4 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { UserRoles } from '@prisma/client';
+import { Type } from 'class-transformer';
 import {
   IsDefined,
   IsNotEmpty,
@@ -21,7 +23,7 @@ export class CreateUserRoleDto implements Pick<UserRoleEntity, 'name' | 'permiss
   @IsString()
   @IsNotEmpty()
   @IsDefined()
-  name: string;
+  name: UserRoles;
 
   @ApiProperty({
     description: 'The total value of user role permissions',
@@ -29,6 +31,7 @@ export class CreateUserRoleDto implements Pick<UserRoleEntity, 'name' | 'permiss
     default: 255,
   })
   @Max(2 ** 64 - 1)
+  @Type(() => BigInt)
   @IsNumber()
   @IsDefined()
   permissions: bigint;

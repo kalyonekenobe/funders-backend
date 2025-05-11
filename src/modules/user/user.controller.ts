@@ -34,7 +34,7 @@ import { PostService } from 'src/modules/post/post.service';
 import { PostReactionService } from 'src/modules/post/submodules/post-reaction/post-reaction.service';
 import { PostCommentService } from 'src/modules/post/submodules/post-comment/post-comment.service';
 import { PostCommentReactionService } from 'src/modules/post/submodules/post-comment/submodules/post-comment-reaction/post-comment-reaction.service';
-import { ChatsOnUsersService } from 'src/modules/chat/submodules/chats-on-users/chats-on-users.service';
+import { ChatToUserService } from 'src/modules/chat/submodules/chat-to-user/chat-to-user.service';
 import {
   CreateUserUploadedFiles,
   Permissions,
@@ -70,7 +70,7 @@ export class UserController {
     private readonly postReactionService: PostReactionService,
     private readonly postCommentService: PostCommentService,
     private readonly postCommentReactionService: PostCommentReactionService,
-    private readonly chatsOnUsersService: ChatsOnUsersService,
+    private readonly chatToUserService: ChatToUserService,
   ) {}
 
   @Auth(JwtAuthGuard, { permissions: Permissions.ManageUsers })
@@ -159,7 +159,7 @@ export class UserController {
   @Get(':id/reports/incoming')
   public async findAllUserIncomingReports(
     @Param('id') userId: string,
-    @Query() query: Record<string, string>,
+    @Query() query?: Record<string, string>,
   ): Promise<UserReportEntity[]> {
     return this.userReportService.findAll(
       _.merge(deserializeQueryString(query), { where: { userId } }),
@@ -179,7 +179,7 @@ export class UserController {
   @Get(':id/reports/outcoming')
   public async findAllUserOutcomingReports(
     @Param('id') reporterId: string,
-    @Query() query: Record<string, string>,
+    @Query() query?: Record<string, string>,
   ): Promise<UserReportEntity[]> {
     return this.userReportService.findAll(
       _.merge(deserializeQueryString(query), { where: { reporterId } }),
@@ -256,8 +256,11 @@ export class UserController {
     schema: { example: '23fbed56-1bb9-40a0-8977-2dd0f0c6c31f' },
   })
   @Get(':id/chats')
-  public async findAllUserChats(@Param('id') userId: string): Promise<ChatEntity[]> {
-    return this.chatsOnUsersService.findAllChatsForUser(userId);
+  public async findAllUserChats(
+    @Param('id') userId: string,
+    @Query() query?: Record<string, string>,
+  ): Promise<ChatEntity[]> {
+    return this.chatToUserService.findAllChatsForUser(userId, deserializeQueryString(query));
   }
 
   @Auth(JwtAuthGuard)

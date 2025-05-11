@@ -1,17 +1,36 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ChatRoleEntity } from '../entities/chat-role.entity';
-import { IsDefined, IsNotEmpty, IsString, Matches, MaxLength } from 'class-validator';
+import { ChatRoles } from '@prisma/client';
+import {
+  IsDefined,
+  IsNotEmpty,
+  IsNumber,
+  IsString,
+  Matches,
+  Max,
+  MaxLength,
+} from 'class-validator';
+import { ChatRoleEntity } from 'src/modules/chat/submodules/chat-role/entities/chat-role.entity';
 
-export class CreateChatRoleDto implements ChatRoleEntity {
+export class CreateChatRoleDto implements Pick<ChatRoleEntity, 'name' | 'permissions'> {
   @ApiProperty({
-    description: 'Name of the chat role',
-    examples: ['Owner', 'Moderator', 'Default'],
-    default: 'Owner',
+    description: 'The name of the chat role',
+    examples: ['User', 'Moderator', 'Administrator'],
+    default: 'User',
   })
   @Matches(/^[a-zA-Z_0-9 ]+$/)
   @MaxLength(50)
   @IsString()
   @IsNotEmpty()
   @IsDefined()
-  name: string;
+  name: ChatRoles;
+
+  @ApiProperty({
+    description: 'The total value of chat role permissions',
+    examples: [255, 15, 127, 31],
+    default: 255,
+  })
+  @Max(2 ** 64 - 1)
+  @IsNumber()
+  @IsDefined()
+  permissions: bigint;
 }

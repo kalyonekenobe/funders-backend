@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { $Enums, UserReport } from '@prisma/client';
+import { UserReport, UserReportReasons, UserReportStatuses } from '@prisma/client';
 import {
   IsDate,
   IsDefined,
@@ -45,23 +45,23 @@ export class UserReportEntity implements UserReport {
 
   @ApiProperty({
     description: 'The reason of the user report',
-    examples: Object.values($Enums.UserReportReasons),
-    default: Object.values($Enums.UserReportReasons)[0],
+    examples: Object.values(UserReportReasons),
+    default: Object.values(UserReportReasons)[0],
   })
-  @IsEnum($Enums.UserReportReasons)
+  @IsEnum(UserReportReasons)
   @IsNotEmpty()
   @IsDefined()
-  reason: $Enums.UserReportReasons;
+  reason: UserReportReasons;
 
   @ApiProperty({
     description: 'The status of the user report',
-    examples: Object.values($Enums.UserReportStatuses),
-    default: Object.values($Enums.UserReportStatuses)[0],
+    examples: Object.values(UserReportStatuses),
+    default: Object.values(UserReportStatuses)[0],
   })
-  @IsEnum($Enums.UserReportStatuses)
+  @IsEnum(UserReportStatuses)
   @IsNotEmpty()
   @IsDefined()
-  status: $Enums.UserReportStatuses;
+  status: UserReportStatuses;
 
   @ApiProperty({
     description: 'The user penalty note',

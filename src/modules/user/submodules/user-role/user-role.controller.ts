@@ -30,7 +30,7 @@ export class UserRoleController {
   @ApiOkResponse({ description: 'The list of user roles', type: [UserRoleEntity] })
   @ApiInternalServerErrorResponse({ description: 'Internal server error was occured.' })
   @Get()
-  public async findAll(@Query() query: Record<string, string>): Promise<UserRoleEntity[]> {
+  public async findAll(@Query() query?: Record<string, string>): Promise<UserRoleEntity[]> {
     return this.userRoleService.findAll(deserializeQueryString(query));
   }
 
@@ -43,8 +43,8 @@ export class UserRoleController {
   })
   @Get(':name')
   public async findOne(
-    @Param('name') name: string,
-    @Query() query: Record<string, string>,
+    @Param('name') name: UserRoleEntity['name'],
+    @Query() query?: Record<string, string>,
   ): Promise<UserRoleEntity> {
     return this.userRoleService.findOne(
       _.merge(deserializeQueryString(query), { where: { name } }),
@@ -94,7 +94,7 @@ export class UserRoleController {
   })
   @Put(':name')
   public async update(
-    @Param('name') name: string,
+    @Param('name') name: UserRoleEntity['name'],
     @Body() updateUserRoleDto: UpdateUserRoleDto,
   ): Promise<UserRoleEntity> {
     return this.userRoleService.update(name, updateUserRoleDto);
@@ -121,7 +121,7 @@ export class UserRoleController {
     schema: { example: 'Administrator' },
   })
   @Delete(':name')
-  public async remove(@Param('name') name: string): Promise<UserRoleEntity> {
+  public async remove(@Param('name') name: UserRoleEntity['name']): Promise<UserRoleEntity> {
     return this.userRoleService.remove(name);
   }
 }

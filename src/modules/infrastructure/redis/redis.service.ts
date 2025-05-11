@@ -55,8 +55,12 @@ export class RedisService {
     }
   }
 
-  public async getByPattern(pattern: string, index = 0): Promise<any | null> {
-    const [, [keysError, keys]]: any = await this.client.multi().select(index).keys(pattern).exec();
+  public async getByPattern(
+    pattern: string,
+    index = 0,
+    options?: { limit?: number; sortByTtl?: boolean },
+  ): Promise<any | null> {
+    let [, [keysError, keys]]: any = await this.client.multi().select(index).keys(pattern).exec();
 
     if (keysError) {
       throw keysError;
@@ -64,6 +68,10 @@ export class RedisService {
 
     if (keys.length === 0) {
       return [];
+    }
+
+    if (options?.limit) {
+      keys = keys.slice(0, options.limit);
     }
 
     const [, [error, result]]: any = await this.client.multi().select(index).mget(keys).exec();
@@ -74,6 +82,10 @@ export class RedisService {
 
     try {
       if (result?.length > 0) {
+        if (options?.limit) {
+          return result.slice(0, options.limit).map(item => JSON.parse(item));
+        }
+
         return result.map(item => JSON.parse(item));
       }
 
@@ -81,6 +93,89 @@ export class RedisService {
     } catch {
       return result;
     }
+  }
+
+  public async scanByPattern(
+    pattern: string,
+    index = 0,
+    options?: { limit?: number; sortByTtl?: boolean },
+  ): Promise<any[] | null> {
+    await this.client.select(index);
+
+    const limit = options?.limit ?? Infinity;
+    const sortByTtl = options?.sortByTtl ?? false;
+
+    const results: { key: string; ttl: number }[] = [];
+    let cursor = '0';
+
+    do {
+      const [nextCursor, keys]: [string, string[]] = await this.client.scan(
+        cursor,
+        'MATCH',
+        pattern,
+        'COUNT',
+        1000,
+      );
+      cursor = nextCursor;
+
+      if (sortByTtl) {
+        const ttlResults = await Promise.all(
+          keys.map(async key => {
+            const ttl = await this.client.ttl(key);
+            return ttl >= 0 ? { key, ttl } : null;
+          }),
+        );
+        results.push(...(ttlResults.filter(Boolean) as { key: string; ttl: number }[]));
+      } else {
+        results.push(...keys.map(key => ({ key, ttl: 0 }))); // TTL ignored
+      }
+
+      if (results.length >= limit) break;
+    } while (cursor !== '0');
+
+    const selectedKeys = (sortByTtl ? results.sort((a, b) => a.ttl - b.ttl) : results)
+      .slice(0, limit)
+      .map(r => r.key);
+
+    if (selectedKeys.length === 0) return [];
+
+    const values = await this.client.mget(selectedKeys);
+
+    return values.map(val => {
+      try {
+        if (!val) {
+          throw Error('Value is empty');
+        }
+
+        return JSON.parse(val);
+      } catch {
+        return val;
+      }
+    });
+  }
+
+  public async deleteByPattern(pattern: string, index = 0): Promise<number> {
+    const [, [keysError, keys]]: any = await this.client.multi().select(index).keys(pattern).exec();
+
+    if (keysError) {
+      throw keysError;
+    }
+
+    if (keys.length === 0) {
+      return 0;
+    }
+
+    const [, [delError, delResult]]: any = await this.client
+      .multi()
+      .select(index)
+      .del(...keys)
+      .exec();
+
+    if (delError) {
+      throw delError;
+    }
+
+    return delResult;
   }
 
   public async set(key: string, value: any, index = 0, ttl?: number): Promise<'OK' | null> {

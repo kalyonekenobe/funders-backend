@@ -1,16 +1,19 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Chat } from '@prisma/client';
+import { Chat, ChatTypes } from '@prisma/client';
 import {
+  IsDate,
   IsDefined,
+  IsEnum,
   IsNotEmpty,
   IsString,
   IsUUID,
   Matches,
+  MaxDate,
   MaxLength,
   ValidateIf,
 } from 'class-validator';
-import { ChatMessageEntity } from 'src/chat-message/entities/chat-message.entity';
-import { UserPublicEntity } from 'src/user/entities/user-public.entity';
+import { ChatMessageEntity } from 'src/modules/chat/submodules/chat-message/entities/chat-message.entity';
+import { ChatToUserEntity } from 'src/modules/chat/submodules/chat-to-user/entities/chat-to-user.entity';
 
 export class ChatEntity implements Chat {
   @ApiProperty({
@@ -37,12 +40,54 @@ export class ChatEntity implements Chat {
   name: string | null;
 
   @ApiProperty({
-    description: 'The nested array of users which have this chat',
+    description: 'The type of the chat',
+    examples: Object.values(ChatTypes),
+    default: Object.values(ChatTypes)[0],
   })
-  users?: UserPublicEntity[];
+  @IsEnum(ChatTypes)
+  @IsNotEmpty()
+  @IsDefined()
+  type: ChatTypes;
 
   @ApiProperty({
-    description: 'The nested array of messages which have this chat',
+    description: 'The description of the chat',
+    examples: ['Students chat of Kyiv-Mohyla Academy', null],
+    default: 'Students chat of Kyiv-Mohyla Academy',
   })
+  @IsString()
+  @ValidateIf((_, value) => value)
+  description: string | null;
+
+  @ApiProperty({ description: 'The image of the chat' })
+  @IsString()
+  @ValidateIf((_, value) => value)
+  image: string | null;
+
+  @ApiProperty({
+    description: 'Chat creation date and time',
+    examples: [new Date('2024-01-03'), new Date('2023-11-02'), new Date('2023-06-30')],
+    default: new Date('2024-01-03'),
+  })
+  @IsDate()
+  @MaxDate(new Date())
+  @IsNotEmpty()
+  @IsDefined()
+  createdAt: Date;
+
+  @ApiProperty({
+    description: 'Chat last updated date and time',
+    examples: [new Date('2024-01-03'), new Date('2023-11-02'), new Date('2023-06-30')],
+    default: new Date('2024-01-03'),
+  })
+  @IsDate()
+  @MaxDate(new Date())
+  @IsNotEmpty()
+  @IsDefined()
+  updatedAt: Date;
+
+  @ApiProperty({ description: 'The nested array of chat to user which have this chat' })
+  chatsToUsers?: ChatToUserEntity[];
+
+  @ApiProperty({ description: 'The nested array of messages which have this chat' })
   messages?: ChatMessageEntity[];
 }

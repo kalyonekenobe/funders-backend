@@ -1,10 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { PostComment } from '@prisma/client';
 import { IsDate, IsDefined, IsNotEmpty, IsString, IsUUID, Matches, MaxDate } from 'class-validator';
-import { PostCommentAttachmentEntity } from 'src/post-comment-attachment/entities/post-comment-attachment.entity';
-import { PostCommentReactionEntity } from 'src/post-comment-reaction/entities/post-comment-reaction.entity';
-import { PostEntity } from 'src/post/entities/post.entity';
-import { UserPublicEntity } from 'src/user/entities/user-public.entity';
+import { PostEntity } from 'src/modules/post/entities/post.entity';
+import { PostCommentAttachmentEntity } from 'src/modules/post/submodules/post-comment/submodules/post-comment-attachment/entities/post-comment-attachment.entity';
+import { PostCommentReactionEntity } from 'src/modules/post/submodules/post-comment/submodules/post-comment-reaction/entities/post-comment-reaction.entity';
+import { PostCommentReportEntity } from 'src/modules/post/submodules/post-comment/submodules/post-comment-report/entities/post-comment-report.entity';
+import { UserPublicEntity } from 'src/modules/user/entities/user-public.entity';
 
 export class PostCommentEntity implements PostComment {
   @ApiProperty({
@@ -82,7 +83,7 @@ export class PostCommentEntity implements PostComment {
   @MaxDate(new Date())
   @IsNotEmpty()
   @IsDefined()
-  updatedAt: Date | null;
+  updatedAt: Date;
 
   @ApiProperty({
     description: 'The date and time the post comment was removed',
@@ -102,7 +103,7 @@ export class PostCommentEntity implements PostComment {
   author?: UserPublicEntity;
 
   @ApiProperty({ description: 'The nested object of parent post comment of post comment' })
-  parentComment?: PostCommentEntity;
+  parentComment?: PostCommentEntity | null;
 
   @ApiProperty({ description: 'The nested array of replies of post comment' })
   replies?: PostCommentEntity[];
@@ -112,4 +113,7 @@ export class PostCommentEntity implements PostComment {
 
   @ApiProperty({ description: 'The nested array of attachments of post comment' })
   attachments?: PostCommentAttachmentEntity[];
+
+  @ApiProperty({ description: 'The nested array of reports of post comment' })
+  reports?: PostCommentReportEntity[];
 }

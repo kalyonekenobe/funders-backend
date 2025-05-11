@@ -5,7 +5,11 @@ import { ConfigService } from '@nestjs/config';
 import { ConfigVariables } from 'src/core/enums/app.enums';
 import { AuthException } from 'src/core/exceptions/auth.exception';
 import { JwtService } from '@nestjs/jwt';
-import { SupabaseModuleOptions, SupabaseRole } from 'src/modules/infrastructure/supabase/types/supabase.types';
+import {
+  SupabaseModuleOptions,
+  SupabaseRole,
+} from 'src/modules/infrastructure/supabase/types/supabase.types';
+import { LoggerService } from 'src/modules/infrastructure/logger/logger.service';
 
 @Injectable()
 export class SupabaseService {
@@ -16,6 +20,7 @@ export class SupabaseService {
     options: SupabaseModuleOptions,
     private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
+    private readonly loggerService: LoggerService,
   ) {
     const { supabaseUrl, supabaseKey, supabaseBucketName, supabaseJwtSecret } = options;
     this.supabaseBucketName = supabaseBucketName;
@@ -39,7 +44,7 @@ export class SupabaseService {
   }
 
   public async upload(file: Express.Multer.File, filename?: string): Promise<any> {
-    const { accessToken } = await this.supabase.realtime;
+    const { accessTokenValue: accessToken } = await this.supabase.realtime;
 
     if (!accessToken) {
       throw new AuthException(
@@ -75,13 +80,18 @@ export class SupabaseService {
         },
       });
 
-      return upload.findPreviousUploads().then(previousUploads => {
-        if (previousUploads.length) {
-          upload.resumeFromPreviousUpload(previousUploads[0]);
-        }
+      return upload
+        .findPreviousUploads()
+        .then(previousUploads => {
+          if (previousUploads.length) {
+            upload.resumeFromPreviousUpload(previousUploads[0]);
+          }
 
-        upload.start();
-      });
+          upload.start();
+        })
+        .catch(error => {
+          this.loggerService.error(error.message, error, SupabaseService.name);
+        });
     });
   }
 

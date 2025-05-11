@@ -1,17 +1,20 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsDefined, IsNotEmpty, IsString, IsUUID, MaxLength, ValidateIf } from 'class-validator';
-import { PostCommentAttachmentEntity } from '../entities/post-comment-attachment.entity';
+import { IsDefined, IsNotEmpty, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
+import { PostCommentAttachmentEntity } from 'src/modules/post/submodules/post-comment/submodules/post-comment-attachment/entities/post-comment-attachment.entity';
 
-export class CreatePostCommentAttachmentDto implements Omit<PostCommentAttachmentEntity, 'id'> {
+export class CreatePostCommentAttachmentDto
+  implements
+    Pick<PostCommentAttachmentEntity, 'location'>,
+    Pick<Partial<PostCommentAttachmentEntity>, 'commentId' | 'filename'>
+{
   @ApiProperty({
     description: 'The uuid of post comment of the post comment attachment',
     examples: ['b7af9cd4-5533-4737-862b-78bce985c987', '989d32c2-abd4-43d3-a420-ee175ae16b98'],
     default: 'b7af9cd4-5533-4737-862b-78bce985c987',
   })
   @IsUUID()
-  @IsNotEmpty()
-  @IsDefined()
-  commentId: string;
+  @IsOptional()
+  commentId?: string;
 
   @ApiProperty({
     description: 'The filepath of post comment attachment',
@@ -24,8 +27,9 @@ export class CreatePostCommentAttachmentDto implements Omit<PostCommentAttachmen
   })
   @IsString()
   @MaxLength(255)
+  @IsNotEmpty()
   @IsDefined()
-  file: string;
+  location: string;
 
   @ApiProperty({
     description: 'Custom filename of the file of the post comment attachment',
@@ -34,16 +38,6 @@ export class CreatePostCommentAttachmentDto implements Omit<PostCommentAttachmen
   })
   @IsString()
   @MaxLength(255)
-  @ValidateIf((_, value) => value)
-  filename: string | null;
-
-  @ApiProperty({
-    description: 'Resource type of the file of the post comment attachment',
-    examples: ['raw', 'image', 'video'],
-    default: 'raw',
-  })
-  @IsString()
-  @MaxLength(255)
-  @IsDefined()
-  resourceType: string;
+  @IsOptional()
+  filename?: string | null;
 }

@@ -18,6 +18,7 @@ import { PostCategoryEntity } from 'src/modules/post/submodules/post-category/en
 import { CategoryToPostService } from 'src/modules/post/submodules/category-to-post/category-to-post.service';
 import { Routes } from 'src/core/enums/app.enums';
 import { RoutesApiTags } from 'src/core/constants';
+import { PostEntity } from 'src/modules/post/entities/post.entity';
 
 @ApiTags(RoutesApiTags[Routes.CategoryToPost])
 @Controller(Routes.CategoryToPost)
@@ -29,52 +30,39 @@ export class CategoryToPostController {
     description: 'The list of categories was successfully added to the post.',
     type: [PostCategoryEntity],
   })
-  @ApiUnauthorizedResponse({
-    description: 'The user is unauthorized.',
-  })
-  @ApiForbiddenResponse({
-    description: 'The user is forbidden to perform this action.',
-  })
-  @ApiNotFoundResponse({
-    description: 'The post with the requested id was not found.',
-  })
+  @ApiUnauthorizedResponse({ description: 'The user is unauthorized.' })
+  @ApiForbiddenResponse({ description: 'The user is forbidden to perform this action.' })
+  @ApiNotFoundResponse({ description: 'The post with the requested id was not found.' })
   @ApiConflictResponse({
     description: 'Cannot add the list of categories to the post. Invalid data was provided.',
   })
-  @ApiInternalServerErrorResponse({
-    description: 'Internal server error was occured.',
-  })
+  @ApiInternalServerErrorResponse({ description: 'Internal server error was occured.' })
   @ApiParam({
     name: 'id',
     description: 'The uuid of the post to add the categories list',
     schema: { example: '989d32c2-abd4-43d3-a420-ee175ae16b98' },
   })
   @Post()
-  async createPostCategories(
-    @Param('id') postId: string,
+  public async createPostCategories(
+    @Param('id') postId: PostEntity['id'],
     @Body(ValidationPipes.parseArrayPipe(PostCategoryEntity))
     postCategoriesList: PostCategoryEntity[],
-  ) {
+  ): Promise<PostCategoryEntity[]> {
     return this.categoryToPostService.createPostCategories(postId, postCategoriesList);
   }
 
-  @ApiOkResponse({
-    description: 'The list of categories of the post',
-    type: [PostCategoryEntity],
-  })
-  @ApiNotFoundResponse({
-    description: 'Cannot find post with the specified id.',
-  })
-  @ApiInternalServerErrorResponse({
-    description: 'Internal server error was occured.',
-  })
+  @ApiOkResponse({ description: 'The list of categories of the post', type: [PostCategoryEntity] })
+  @ApiNotFoundResponse({ description: 'Cannot find post with the specified id.' })
+  @ApiInternalServerErrorResponse({ description: 'Internal server error was occured.' })
   @ApiParam({
     name: 'id',
     description: 'The uuid of the post to find the categories list',
     schema: { example: '989d32c2-abd4-43d3-a420-ee175ae16b98' },
   })
   @Get()
-  async findAllPostCategories(@Param('id') postId: string) {
+  public async findAllPostCategories(
+    @Param('id') postId: PostEntity['id'],
+  ): Promise<PostCategoryEntity[]> {
     return this.categoryToPostService.findAllPostCategories(postId);
   }
 
@@ -83,32 +71,24 @@ export class CategoryToPostController {
     description: 'The list of categories of the post was successfully updated.',
     type: [PostCategoryEntity],
   })
-  @ApiUnauthorizedResponse({
-    description: 'The user is unauthorized.',
-  })
-  @ApiForbiddenResponse({
-    description: 'The user is forbidden to perform this action.',
-  })
-  @ApiNotFoundResponse({
-    description: 'The post with the requested id was not found.',
-  })
+  @ApiUnauthorizedResponse({ description: 'The user is unauthorized.' })
+  @ApiForbiddenResponse({ description: 'The user is forbidden to perform this action.' })
+  @ApiNotFoundResponse({ description: 'The post with the requested id was not found.' })
   @ApiConflictResponse({
     description: 'Cannot update the list of categories of the post. Invalid data was provided.',
   })
-  @ApiInternalServerErrorResponse({
-    description: 'Internal server error was occured.',
-  })
+  @ApiInternalServerErrorResponse({ description: 'Internal server error was occured.' })
   @ApiParam({
     name: 'id',
     description: 'The uuid of the post to update the categories list',
     schema: { example: '989d32c2-abd4-43d3-a420-ee175ae16b98' },
   })
   @Put()
-  async updatePostCategories(
-    @Param('id') postId: string,
+  public async updatePostCategories(
+    @Param('id') postId: PostEntity['id'],
     @Body(ValidationPipes.parseArrayPipe(PostCategoryEntity))
     postCategoriesList: PostCategoryEntity[],
-  ) {
+  ): Promise<PostCategoryEntity[]> {
     return this.categoryToPostService.updatePostCategories(postId, postCategoriesList);
   }
 
@@ -117,29 +97,21 @@ export class CategoryToPostController {
     description: 'The list of categories of the post was successfully removed.',
     type: [PostCategoryEntity],
   })
-  @ApiUnauthorizedResponse({
-    description: 'The user is unauthorized.',
-  })
-  @ApiForbiddenResponse({
-    description: 'The user is forbidden to perform this action.',
-  })
-  @ApiNotFoundResponse({
-    description: 'The post with the requested id was not found.',
-  })
-  @ApiInternalServerErrorResponse({
-    description: 'Internal server error was occured.',
-  })
+  @ApiUnauthorizedResponse({ description: 'The user is unauthorized.' })
+  @ApiForbiddenResponse({ description: 'The user is forbidden to perform this action.' })
+  @ApiNotFoundResponse({ description: 'The post with the requested id was not found.' })
+  @ApiInternalServerErrorResponse({ description: 'Internal server error was occured.' })
   @ApiParam({
     name: 'id',
     description: 'The id of the post to delete the categories list',
     schema: { example: '989d32c2-abd4-43d3-a420-ee175ae16b98' },
   })
   @Delete()
-  async removePostCategories(
+  public async removePostCategories(
     @Param('id') postId: string,
     @Body(ValidationPipes.parseArrayPipe(PostCategoryEntity))
     postCategoriesList: PostCategoryEntity[],
-  ) {
+  ): Promise<PostCategoryEntity[]> {
     return this.categoryToPostService.removePostCategories(postId, postCategoriesList);
   }
 }

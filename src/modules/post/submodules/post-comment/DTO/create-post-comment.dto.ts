@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsDefined, IsNotEmpty, IsString, IsUUID, Matches, ValidateIf } from 'class-validator';
 import { PostCommentEntity } from '../entities/post-comment.entity';
-import { CreatePostCommentAttachmentDto } from 'src/post-comment-attachment/dto/create-post-comment-attachment.dto';
+import { CreatePostCommentAttachmentDto } from 'src/modules/post/submodules/post-comment/submodules/post-comment-attachment/DTO/create-post-comment-attachment.dto';
 
 type CreatePostComment = Omit<
   PostCommentEntity,

@@ -17,16 +17,16 @@ import {
 import { UserRoleEntity } from 'src/modules/user/submodules/user-role/entities/user-role.entity';
 import { FollowingEntity } from 'src/modules/user/submodules/following/entities/following.entity';
 import { UserPenaltyEntity } from 'src/modules/user/submodules/user-penalty/entities/user-penalty.entity';
-import { ChatEntity } from 'src/modules/chat/entities/chat.entity';
 import { ChatMessageEntity } from 'src/modules/chat/submodules/chat-message/entities/chat-message.entity';
 import { PostEntity } from 'src/modules/post/entities/post.entity';
 import { PostReactionEntity } from 'src/modules/post/submodules/post-reaction/entities/post-reaction.entity';
 import { PostDonationEntity } from 'src/modules/post/submodules/post-donation/entities/post-donation.entity';
 import { PostCommentEntity } from 'src/modules/post/submodules/post-comment/entities/post-comment.entity';
 import { PostCommentReactionEntity } from 'src/modules/post/submodules/post-comment/submodules/post-comment-reaction/entities/post-comment-reaction.entity';
-import { $Enums } from '@prisma/client';
+import { $Enums, UserRoles } from '@prisma/client';
 import { UserEntity } from 'src/modules/user/entities/user.entity';
 import { UserReportEntity } from 'src/modules/user/submodules/user-report/entities/user-report.entity';
+import { ChatToUserEntity } from 'src/modules/chat/submodules/chat-to-user/entities/chat-to-user.entity';
 
 export class UserPublicEntity implements Omit<UserEntity, 'password' | 'refreshToken'> {
   @ApiProperty({
@@ -59,7 +59,7 @@ export class UserPublicEntity implements Omit<UserEntity, 'password' | 'refreshT
   @IsString()
   @IsNotEmpty()
   @IsDefined()
-  role: string;
+  role: UserRoles;
 
   @ApiProperty({
     description: "User's first name",
@@ -131,9 +131,8 @@ export class UserPublicEntity implements Omit<UserEntity, 'password' | 'refreshT
   @ValidateIf((_, value) => value)
   bio: string | null;
 
-  @ApiProperty({ description: "User's avatar path" })
+  @ApiProperty({ description: 'The image of the user' })
   @IsString()
-  @MaxLength(255)
   @ValidateIf((_, value) => value)
   image: string | null;
 
@@ -200,8 +199,8 @@ export class UserPublicEntity implements Omit<UserEntity, 'password' | 'refreshT
   @ApiProperty({ description: 'The nested array of outcoming user reports of this user' })
   outcomingUserReports?: UserReportEntity[];
 
-  @ApiProperty({ description: 'The nested array of chats of this user' })
-  chats?: ChatEntity[];
+  @ApiProperty({ description: 'The nested array of chat to user of this user' })
+  chatsToUsers?: ChatToUserEntity[];
 
   @ApiProperty({ description: 'The nested array of messages of this user' })
   messages?: ChatMessageEntity[];

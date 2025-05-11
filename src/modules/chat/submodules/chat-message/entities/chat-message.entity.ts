@@ -1,9 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ChatMessage } from '@prisma/client';
+import { ChatMessage, ChatMessageStatuses } from '@prisma/client';
 import {
   IsBoolean,
   IsDate,
   IsDefined,
+  IsEnum,
   IsNotEmpty,
   IsString,
   IsUUID,
@@ -11,9 +12,9 @@ import {
   MaxDate,
   ValidateIf,
 } from 'class-validator';
-import { ChatMessageAttachmentEntity } from 'src/chat-message-attachment/entities/chat-message-attachment.entity';
-import { ChatEntity } from 'src/chat/entities/chat.entity';
-import { UserPublicEntity } from 'src/user/entities/user-public.entity';
+import { ChatEntity } from 'src/modules/chat/entities/chat.entity';
+import { ChatMessageAttachmentEntity } from 'src/modules/chat/submodules/chat-message/submodules/chat-message-attachment/entities/chat-message-attachment.entity';
+import { UserPublicEntity } from 'src/modules/user/entities/user-public.entity';
 
 export class ChatMessageEntity implements ChatMessage {
   @ApiProperty({
@@ -58,7 +59,7 @@ export class ChatMessageEntity implements ChatMessage {
   @IsNotEmpty()
   @IsDefined()
   @ValidateIf((_, value) => value)
-  replyTo: string | null;
+  parentMessageId: string | null;
 
   @ApiProperty({
     description: 'The text of the chat message',
@@ -69,7 +70,16 @@ export class ChatMessageEntity implements ChatMessage {
   @IsString()
   @IsNotEmpty()
   @IsDefined()
-  text: string;
+  content: string;
+
+  @ApiProperty({
+    description: 'The status of the chat message',
+    examples: Object.values(ChatMessageStatuses),
+    default: Object.values(ChatMessageStatuses)[0],
+  })
+  @IsEnum(ChatMessageStatuses)
+  @IsDefined()
+  status: ChatMessageStatuses;
 
   @ApiProperty({
     description: 'Is the chat message pinned',
@@ -100,7 +110,7 @@ export class ChatMessageEntity implements ChatMessage {
   @MaxDate(new Date())
   @IsNotEmpty()
   @IsDefined()
-  updatedAt: Date | null;
+  updatedAt: Date;
 
   @ApiProperty({
     description: 'The date and time the chat message was removed',
@@ -120,7 +130,7 @@ export class ChatMessageEntity implements ChatMessage {
   author?: UserPublicEntity;
 
   @ApiProperty({ description: 'The nested object of parent message of this chat message' })
-  parentMessage?: ChatMessageEntity;
+  parentMessage?: ChatMessageEntity | null;
 
   @ApiProperty({ description: 'The nested array of replies of this chat message' })
   replies?: ChatMessageEntity[];

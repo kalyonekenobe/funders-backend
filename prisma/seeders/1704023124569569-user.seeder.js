@@ -1,10 +1,6 @@
 const { prisma } = require('../utils/prisma.utils');
 const { PasswordService } = require('../utils/password.service');
-const { Stripe } = require('stripe');
-
-const stripe = new Stripe(process.env.STRIPE_API_KEY, {
-  apiVersion: '2024-04-10',
-});
+const stripe = require('../utils/stripe.utils');
 
 const passwordService = new PasswordService(
   process.env.USER_PASSWORD_SALT_PREFIX || '',
@@ -15,7 +11,7 @@ module.exports = {
   async up() {
     const data = [
       {
-        registrationMethod: 'Credentials',
+        userRegistrationMethod: 'Credentials',
         role: 'Administrator',
         firstName: 'Alex',
         lastName: 'Igumnov',
@@ -24,8 +20,8 @@ module.exports = {
         password: await passwordService.hash('#Password123'),
       },
       {
-        registrationMethod: 'Google',
-        role: 'Default',
+        userRegistrationMethod: 'Google',
+        role: 'User',
         firstName: 'John',
         lastName: 'Doe',
         birthDate: new Date('1996-07-04'),
@@ -33,7 +29,7 @@ module.exports = {
         password: await passwordService.hash('.123456Secret'),
       },
       {
-        registrationMethod: 'Discord',
+        userRegistrationMethod: 'Discord',
         role: 'Volunteer',
         firstName: 'Samantha',
         lastName: 'Jones',
@@ -42,7 +38,7 @@ module.exports = {
         password: await passwordService.hash('Ofk@j14mf50t'),
       },
       {
-        registrationMethod: 'Google',
+        userRegistrationMethod: 'Google',
         role: 'Volunteer',
         firstName: 'Vova',
         lastName: 'Havryliuk',
@@ -51,8 +47,8 @@ module.exports = {
         password: await passwordService.hash('lbmr-6rfm34fr!XX'),
       },
       {
-        registrationMethod: 'Credentials',
-        role: 'Default',
+        userRegistrationMethod: 'Credentials',
+        role: 'User',
         firstName: 'Helen',
         lastName: 'Effenberg',
         birthDate: new Date('2004-01-30'),

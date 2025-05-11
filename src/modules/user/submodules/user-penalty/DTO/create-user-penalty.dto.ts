@@ -5,6 +5,7 @@ import {
   IsDefined,
   IsNotEmpty,
   IsNumber,
+  IsOptional,
   IsString,
   IsUUID,
   Max,
@@ -13,7 +14,9 @@ import {
 import { UserPenaltyEntity } from 'src/modules/user/submodules/user-penalty/entities/user-penalty.entity';
 
 export class CreateUserPenaltyDto
-  implements Pick<UserPenaltyEntity, 'userId' | 'dueTo' | 'note' | 'permissionsPenalty'>
+  implements
+    Pick<UserPenaltyEntity, 'dueTo' | 'note' | 'permissionsPenalty'>,
+    Pick<Partial<UserPenaltyEntity>, 'userId'>
 {
   @ApiProperty({
     description: "User penalty user's uuid",
@@ -21,9 +24,8 @@ export class CreateUserPenaltyDto
     default: 'b7af9cd4-5533-4737-862b-78bce985c987',
   })
   @IsUUID()
-  @IsNotEmpty()
-  @IsDefined()
-  userId: string;
+  @IsOptional()
+  userId?: string;
 
   @ApiProperty({
     description: "The user penalty date and time user's ban is due to",

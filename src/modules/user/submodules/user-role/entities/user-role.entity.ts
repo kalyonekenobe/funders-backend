@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { UserRole } from '@prisma/client';
+import { UserRole, UserRoles } from '@prisma/client';
 import {
   IsDate,
   IsDefined,
@@ -24,7 +24,7 @@ export class UserRoleEntity implements UserRole {
   @IsString()
   @IsNotEmpty()
   @IsDefined()
-  name: string;
+  name: UserRoles;
 
   @ApiProperty({
     description: 'The total value of user role permissions',

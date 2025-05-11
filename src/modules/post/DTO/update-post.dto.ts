@@ -3,25 +3,24 @@ import { Decimal } from '@prisma/client/runtime/library';
 import {
   IsBoolean,
   IsDate,
-  IsDecimal,
+  IsNumber,
   IsString,
   Matches,
   MaxDate,
   MaxLength,
-  Validate,
+  Min,
   ValidateIf,
 } from 'class-validator';
 import { PostEntity } from '../entities/post.entity';
-import { Transform } from 'class-transformer';
-import { DecimalMin } from 'src/core/validation/decorators/decimal-min.decorator';
-import { CreateCategoriesOnPostsDto } from 'src/categories-on-posts/dto/create-categories-on-posts.dto';
-import { CreatePostAttachmentDto } from 'src/post-attachment/dto/create-post-attachment.dto';
+import { Transform, Type } from 'class-transformer';
+import { CreateCategoryToPostDto } from 'src/modules/post/submodules/category-to-post/DTO/create-category-to-post.dto';
+import { CreatePostAttachmentDto } from 'src/modules/post/submodules/post-attachment/DTO/create-post-attachment.dto';
 
 export class UpdatePostDto
   implements
-    Omit<
+    Pick<
       Partial<PostEntity>,
-      'id' | 'authorId' | 'createdAt' | 'updatedAt' | 'attachments' | 'categories'
+      'title' | 'content' | 'fundsToBeRaised' | 'image' | 'isDraft' | 'deadline' | 'removedAt'
     >
 {
   @ApiProperty({
@@ -61,9 +60,9 @@ export class UpdatePostDto
     examples: [10000.5, 1234.41, 8950],
     default: 8950,
   })
-  @Transform(value => value.value.toString())
-  @Validate(DecimalMin, [0.01])
-  @IsDecimal()
+  @Min(0.01)
+  @IsNumber()
+  @Type(() => Number)
   @ValidateIf((_, value) => value)
   fundsToBeRaised?: Decimal;
 
@@ -79,9 +78,20 @@ export class UpdatePostDto
     default: false,
   })
   @IsBoolean()
-  @Transform(value => Boolean(value))
+  @Transform(({ value }) => value === 'true' || value === true || value === 1)
   @ValidateIf((_, value) => value)
   isDraft?: boolean;
+
+  @ApiProperty({
+    description: 'The date and time the post has to raise the money',
+    examples: [new Date('2024-01-03'), new Date('2023-11-02'), new Date('2023-06-30')],
+    default: new Date('2024-01-03'),
+  })
+  @IsDate()
+  @MaxDate(new Date())
+  @Type(() => Date)
+  @ValidateIf((_, value) => value)
+  deadline?: Date | null;
 
   @ApiProperty({
     description: 'The date and time the post was removed',
@@ -95,7 +105,7 @@ export class UpdatePostDto
 
   @ApiProperty({ description: 'The nested array of categories of this post' })
   @ValidateIf((_, value) => value)
-  categories?: Omit<CreateCategoriesOnPostsDto, 'postId'>[];
+  categories?: Omit<CreateCategoryToPostDto, 'postId'>[];
 
   @ApiProperty({ description: 'The nested array of attachments of this post' })
   @ValidateIf((_, value) => value)

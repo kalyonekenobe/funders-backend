@@ -1,17 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { PostCommentReaction } from '@prisma/client';
-import {
-  IsDate,
-  IsDefined,
-  IsNotEmpty,
-  IsString,
-  IsUUID,
-  MaxDate,
-  MaxLength,
-} from 'class-validator';
-import { PostCommentEntity } from 'src/post-comment/entities/post-comment.entity';
-import { UserReactionTypeEntity } from 'src/user-reaction-type/entities/user-reaction-type.entity';
-import { UserPublicEntity } from 'src/user/entities/user-public.entity';
+import { PostCommentReaction, PostCommentReactions } from '@prisma/client';
+import { IsDate, IsDefined, IsEnum, IsNotEmpty, IsUUID, MaxDate, MaxLength } from 'class-validator';
+import { PostCommentEntity } from 'src/modules/post/submodules/post-comment/entities/post-comment.entity';
+import { UserPublicEntity } from 'src/modules/user/entities/user-public.entity';
 
 export class PostCommentReactionEntity implements PostCommentReaction {
   @ApiProperty({
@@ -40,13 +31,13 @@ export class PostCommentReactionEntity implements PostCommentReaction {
     default: 'Like',
   })
   @MaxLength(50)
-  @IsString()
+  @IsEnum(PostCommentReactions)
   @IsNotEmpty()
   @IsDefined()
-  reactionType: string;
+  reaction: PostCommentReactions;
 
   @ApiProperty({
-    description: 'The date and time of the post comment reaction',
+    description: 'The date and time of creation of the post comment reaction',
     examples: [new Date('2024-01-03'), new Date('2023-11-02'), new Date('2023-06-30')],
     default: new Date('2023-06-30'),
   })
@@ -54,16 +45,22 @@ export class PostCommentReactionEntity implements PostCommentReaction {
   @MaxDate(new Date())
   @IsNotEmpty()
   @IsDefined()
-  datetime: Date;
+  createdAt: Date;
+
+  @ApiProperty({
+    description: 'The date and time of updating of the post comment reaction',
+    examples: [new Date('2024-01-03'), new Date('2023-11-02'), new Date('2023-06-30')],
+    default: new Date('2023-06-30'),
+  })
+  @IsDate()
+  @MaxDate(new Date())
+  @IsNotEmpty()
+  @IsDefined()
+  updatedAt: Date;
 
   @ApiProperty({ description: 'The nested object of user of this post comment reaction' })
   user?: UserPublicEntity;
 
   @ApiProperty({ description: 'The nested object of post comment of this post comment reaction' })
   comment?: PostCommentEntity;
-
-  @ApiProperty({
-    description: 'The nested object of user reaction type of this post comment reaction',
-  })
-  userReactionType?: UserReactionTypeEntity;
 }

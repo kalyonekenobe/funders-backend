@@ -5,5 +5,6 @@ import { UserPenaltyService } from 'src/modules/user/submodules/user-penalty/use
 @Module({
   controllers: [UserPenaltyController],
   providers: [UserPenaltyService],
+  exports: [UserPenaltyService],
 })
 export class UserPenaltyModule {}

@@ -25,7 +25,6 @@ import { LoginWithGoogleDto } from 'src/modules/auth/DTO/login-with-google.dto';
 import { LoginWithDiscordDto } from 'src/modules/auth/DTO/login-with-discord.dto';
 import { PasswordService } from 'src/modules/infrastructure/password/password.service';
 import { UserRegistrationMethods } from '@prisma/client';
-import { UserRoleService } from 'src/modules/user/submodules/user-role/user-role.service';
 import { ServerException } from 'src/core/exceptions/server.exception';
 import bs58 from 'bs58';
 import * as nacl from 'tweetnacl';
@@ -38,7 +37,6 @@ export class AuthService {
   constructor(
     private readonly passwordService: PasswordService,
     private readonly userService: UserService,
-    private readonly userRoleService: UserRoleService,
     private readonly jwtService: JwtService,
     private readonly httpService: HttpService,
     private readonly configService: ConfigService,
@@ -103,38 +101,48 @@ export class AuthService {
   public async loginWithCredentials(
     loginWithCredentialsDto: LoginWithCredentialsDto,
   ): Promise<LoginResponse> {
-    const { email, password } = loginWithCredentialsDto;
-    const user = await this.userService.findOnePrivate({ where: { email } });
+    try {
+      const { email, password } = loginWithCredentialsDto;
+      const user = await this.userService.findOnePrivate({ where: { email } });
 
-    if (user.userRegistrationMethod !== UserRegistrationMethods.Credentials) {
-      if (!user.password || !password) {
-        throw new AuthException(
-          'The provided credentials are invalid. Please verify your email and password and try again.',
-        );
+      if (user.userRegistrationMethod !== UserRegistrationMethods.Credentials) {
+        if (!user.password || !password) {
+          throw new AuthException(
+            'The provided credentials are invalid. Please verify your email and password and try again.',
+          );
+        }
+
+        const passwordsAreEqual = await this.passwordService.compare(password, user.password);
+
+        if (!passwordsAreEqual) {
+          throw new AuthException(
+            'The provided credentials are invalid. Please verify your email and password and try again.',
+          );
+        }
       }
 
-      const passwordsAreEqual = await this.passwordService.compare(password, user.password);
+      await this.validateUser(email, password);
 
-      if (!passwordsAreEqual) {
-        throw new AuthException(
-          'The provided credentials are invalid. Please verify your email and password and try again.',
-        );
+      const { accessToken, refreshToken } = await this.generateJwtTokensPair(user);
+
+      await this.userService.update(user.id, { refreshToken });
+
+      const {
+        password: _password,
+        refreshToken: _refreshToken,
+        ...userWithoutPasswordAndRefreshToken
+      } = user;
+
+      return { ...userWithoutPasswordAndRefreshToken, accessToken, refreshToken };
+    } catch (error: unknown) {
+      if (error instanceof AuthException) {
+        throw error;
       }
+
+      throw new AuthException(
+        'The provided credentials are invalid. Please verify your email and password and try again.',
+      );
     }
-
-    await this.validateUser(email, password);
-
-    const { accessToken, refreshToken } = await this.generateJwtTokensPair(user);
-
-    await this.userService.update(user.id, { refreshToken });
-
-    const {
-      password: _password,
-      refreshToken: _refreshToken,
-      ...userWithoutPasswordAndRefreshToken
-    } = user;
-
-    return { ...userWithoutPasswordAndRefreshToken, accessToken, refreshToken };
   }
 
   public async loginWithGoogle(loginWithGoogleDto: LoginWithGoogleDto): Promise<LoginResponse> {

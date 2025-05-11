@@ -5,5 +5,6 @@ import { FollowingService } from 'src/modules/user/submodules/following/followin
 @Module({
   controllers: [FollowingController],
   providers: [FollowingService],
+  exports: [FollowingService],
 })
 export class FollowingModule {}

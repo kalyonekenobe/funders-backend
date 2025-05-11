@@ -1,9 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, MaxLength, ValidateIf } from 'class-validator';
+import { IsOptional, IsString, MaxLength } from 'class-validator';
 import { PostCommentAttachmentEntity } from '../entities/post-comment-attachment.entity';
 
 export class UpdatePostCommentAttachmentDto
-  implements Omit<Partial<PostCommentAttachmentEntity>, 'id' | 'commentId'>
+  implements Pick<Partial<PostCommentAttachmentEntity>, 'location' | 'filename'>
 {
   @ApiProperty({
     description: 'The filepath of post comment attachment',
@@ -16,8 +16,8 @@ export class UpdatePostCommentAttachmentDto
   })
   @IsString()
   @MaxLength(255)
-  @ValidateIf((_, value) => value)
-  file?: string;
+  @IsOptional()
+  location?: string;
 
   @ApiProperty({
     description: 'Custom filename of the file of the post comment attachment',
@@ -26,16 +26,6 @@ export class UpdatePostCommentAttachmentDto
   })
   @IsString()
   @MaxLength(255)
-  @ValidateIf((_, value) => value)
+  @IsOptional()
   filename?: string | null;
-
-  @ApiProperty({
-    description: 'Resource type of the file of the post comment attachment',
-    examples: ['raw', 'image', 'video'],
-    default: 'raw',
-  })
-  @IsString()
-  @MaxLength(255)
-  @ValidateIf((_, value) => value)
-  resourceType?: string;
 }

@@ -8,8 +8,6 @@ import {
   UploadedFiles,
   UseInterceptors,
 } from '@nestjs/common';
-import { PostAttachmentService } from './post-attachment.service';
-import { UpdatePostAttachmentDto } from './DTO/update-post-attachment.dto';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import {
   ApiConflictResponse,
@@ -22,14 +20,19 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { PostAttachmentEntity } from './entities/post-attachment.entity';
 import { UploadRestrictions } from 'src/core/decorators/upload-restrictions.decorator';
 import { Auth } from 'src/core/decorators/auth.decorator';
 import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
-import { Permissions } from 'src/user/types/user.types';
+import { PostAttachmentService } from 'src/modules/post/submodules/post-attachment/post-attachment.service';
+import { RoutesApiTags } from 'src/core/constants';
+import { Routes } from 'src/core/enums/app.enums';
+import { PostAttachmentEntity } from 'src/modules/post/submodules/post-attachment/entities/post-attachment.entity';
+import { Permissions } from 'src/modules/user/types/user.types';
+import { UpdatePostAttachmentUploadedFiles } from 'src/modules/post/submodules/post-attachment/types/post-attachment.types';
+import { UpdatePostAttachmentDto } from 'src/modules/post/submodules/post-attachment/DTO/update-post-attachment.dto';
 
-@ApiTags('Post attachments')
-@Controller('post-attachments')
+@ApiTags(RoutesApiTags[Routes.PostAttachments])
+@Controller(Routes.PostAttachments)
 export class PostAttachmentController {
   constructor(private readonly postAttachmentService: PostAttachmentService) {}
 
@@ -37,19 +40,17 @@ export class PostAttachmentController {
     description: 'The post attachment with requested id',
     type: PostAttachmentEntity,
   })
-  @ApiNotFoundResponse({
-    description: 'The post attachment with the requested id was not found.',
-  })
-  @ApiInternalServerErrorResponse({
-    description: 'Internal server error was occured.',
-  })
+  @ApiNotFoundResponse({ description: 'The post attachment with the requested id was not found.' })
+  @ApiInternalServerErrorResponse({ description: 'Internal server error was occured.' })
   @ApiParam({
     name: 'id',
     description: 'The uuid of the post attachment to be found.',
     schema: { example: '989d32c2-abd4-43d3-a420-ee175ae16b98' },
   })
   @Get(':id')
-  async findById(@Param('id') id: string) {
+  public async findById(
+    @Param('id') id: PostAttachmentEntity['id'],
+  ): Promise<PostAttachmentEntity> {
     return this.postAttachmentService.findById(id);
   }
 
@@ -58,21 +59,11 @@ export class PostAttachmentController {
     description: 'Post attachment was successfully updated.',
     type: PostAttachmentEntity,
   })
-  @ApiUnauthorizedResponse({
-    description: 'The user is unauthorized.',
-  })
-  @ApiForbiddenResponse({
-    description: 'The user is forbidden to perform this action.',
-  })
-  @ApiNotFoundResponse({
-    description: 'The post attachment with the requested id was not found.',
-  })
-  @ApiConflictResponse({
-    description: 'Cannot update post attachment. Invalid data was provided.',
-  })
-  @ApiInternalServerErrorResponse({
-    description: 'Internal server error was occured.',
-  })
+  @ApiUnauthorizedResponse({ description: 'The user is unauthorized.' })
+  @ApiForbiddenResponse({ description: 'The user is forbidden to perform this action.' })
+  @ApiNotFoundResponse({ description: 'The post attachment with the requested id was not found.' })
+  @ApiConflictResponse({ description: 'Cannot update post attachment. Invalid data was provided.' })
+  @ApiInternalServerErrorResponse({ description: 'Internal server error was occured.' })
   @ApiParam({
     name: 'id',
     description: 'The uuid of the post attachment to be updated',
@@ -81,20 +72,14 @@ export class PostAttachmentController {
   @ApiConsumes('application/json', 'multipart/form-data')
   @UseInterceptors(FileFieldsInterceptor([{ name: 'file', maxCount: 1 }]))
   @Put(':id')
-  async update(
-    @UploadedFiles()
-    @UploadRestrictions([
-      {
-        fieldname: 'file',
-        minFileSize: 1,
-        maxFileSize: 1024 * 1024 * 50,
-      },
-    ])
-    files: { file?: Express.Multer.File[] },
+  public async update(
     @Param('id') id: string,
     @Body() updatePostAttachmentDto: Omit<UpdatePostAttachmentDto, 'file'>,
-  ) {
-    return this.postAttachmentService.update(id, updatePostAttachmentDto, files?.file?.[0]);
+    @UploadedFiles()
+    @UploadRestrictions([{ fieldname: 'file', minFileSize: 1, maxFileSize: 1024 * 1024 * 50 }])
+    files?: UpdatePostAttachmentUploadedFiles,
+  ): Promise<PostAttachmentEntity> {
+    return this.postAttachmentService.update(id, updatePostAttachmentDto, files);
   }
 
   @Auth(JwtAuthGuard, { permissions: Permissions.ManagePosts })
@@ -102,25 +87,17 @@ export class PostAttachmentController {
     description: 'Post attachment was successfully removed.',
     type: PostAttachmentEntity,
   })
-  @ApiUnauthorizedResponse({
-    description: 'The user is unauthorized.',
-  })
-  @ApiForbiddenResponse({
-    description: 'The user is forbidden to perform this action.',
-  })
-  @ApiNotFoundResponse({
-    description: 'The post attachment with the requested id was not found.',
-  })
-  @ApiInternalServerErrorResponse({
-    description: 'Internal server error was occured.',
-  })
+  @ApiUnauthorizedResponse({ description: 'The user is unauthorized.' })
+  @ApiForbiddenResponse({ description: 'The user is forbidden to perform this action.' })
+  @ApiNotFoundResponse({ description: 'The post attachment with the requested id was not found.' })
+  @ApiInternalServerErrorResponse({ description: 'Internal server error was occured.' })
   @ApiParam({
     name: 'id',
     description: 'The id of the post attachment to be deleted',
     schema: { example: '989d32c2-abd4-43d3-a420-ee175ae16b98' },
   })
   @Delete(':id')
-  async remove(@Param('id') id: string) {
+  public async remove(@Param('id') id: PostAttachmentEntity['id']): Promise<PostAttachmentEntity> {
     return this.postAttachmentService.remove(id);
   }
 }

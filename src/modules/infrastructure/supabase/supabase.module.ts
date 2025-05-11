@@ -2,6 +2,7 @@ import { DynamicModule, Global, Module, Provider } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { ServerException } from 'src/core/exceptions/server.exception';
+import { LoggerService } from 'src/modules/infrastructure/logger/logger.service';
 import { SupabaseService } from 'src/modules/infrastructure/supabase/supabase.service';
 import {
   SupabaseModuleAsyncOptions,
@@ -17,9 +18,12 @@ export class SupabaseModule {
       providers: [
         {
           provide: SupabaseService,
-          useFactory: async (configService: ConfigService, jwtService: JwtService) =>
-            new SupabaseService(options, configService, jwtService),
-          inject: [ConfigService, JwtService],
+          useFactory: async (
+            configService: ConfigService,
+            jwtService: JwtService,
+            loggerService: LoggerService,
+          ) => new SupabaseService(options, configService, jwtService, loggerService),
+          inject: [ConfigService, JwtService, LoggerService],
         },
       ],
       exports: [SupabaseService],
@@ -46,16 +50,22 @@ export class SupabaseModule {
           useFactory: async (
             configService: ConfigService,
             jwtService: JwtService,
+            loggerService: LoggerService,
             ...args: any[]
           ): Promise<SupabaseService> => {
-            const config = (await options.useFactory?.(configService, jwtService, ...args)) || {
+            const config = (await options.useFactory?.(
+              configService,
+              jwtService,
+              loggerService,
+              ...args,
+            )) || {
               supabaseKey: '',
               supabaseUrl: '',
               supabaseBucketName: '',
               supabaseJwtSecret: '',
             };
 
-            return new SupabaseService(config, configService, jwtService);
+            return new SupabaseService(config, configService, jwtService, loggerService);
           },
           inject: options.inject || [ConfigService, JwtService],
         },

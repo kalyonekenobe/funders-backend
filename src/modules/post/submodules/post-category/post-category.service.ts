@@ -1,26 +1,26 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/modules/infrastructure/prisma/prisma.service';
-import { PostCategoryEntity } from './entities/post-category.entity';
-import { CreatePostCategoryDto } from './DTO/create-post-category.dto';
-import { UpdatePostCategoryDto } from './DTO/update-post-category.dto';
+import { CreatePostCategoryDto } from 'src/modules/post/submodules/post-category/DTO/create-post-category.dto';
+import { UpdatePostCategoryDto } from 'src/modules/post/submodules/post-category/DTO/update-post-category.dto';
+import { PostCategoryEntity } from 'src/modules/post/submodules/post-category/entities/post-category.entity';
 
 @Injectable()
 export class PostCategoryService {
   constructor(private readonly prismaService: PrismaService) {}
 
-  async findAll(): Promise<PostCategoryEntity[]> {
+  public async findAll(): Promise<PostCategoryEntity[]> {
     return this.prismaService.postCategory.findMany();
   }
 
-  async create(data: CreatePostCategoryDto): Promise<PostCategoryEntity> {
+  public async create(data: CreatePostCategoryDto): Promise<PostCategoryEntity> {
     return this.prismaService.postCategory.create({ data });
   }
 
-  async update(name: string, data: UpdatePostCategoryDto): Promise<PostCategoryEntity> {
+  public async update(name: string, data: UpdatePostCategoryDto): Promise<PostCategoryEntity> {
     return this.prismaService.postCategory.update({ where: { name }, data });
   }
 
-  async remove(name: string): Promise<PostCategoryEntity> {
+  public async remove(name: string): Promise<PostCategoryEntity> {
     return this.prismaService.postCategory.delete({ where: { name } });
   }
 }

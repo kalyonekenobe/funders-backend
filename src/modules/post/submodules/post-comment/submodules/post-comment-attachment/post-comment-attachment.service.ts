@@ -1,97 +1,89 @@
-import { Injectable } from '@nestjs/common';
-import { CloudinaryService } from 'src/core/cloudinary/cloudinary.service';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/modules/infrastructure/prisma/prisma.service';
 import { PostCommentAttachmentEntity } from './entities/post-comment-attachment.entity';
 import { UpdatePostCommentAttachmentDto } from './DTO/update-post-comment-attachment.dto';
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { CreatePostCommentAttachmentDto } from './DTO/create-post-comment-attachment.dto';
-import { IPrepareSingleResourceForUpload } from 'src/core/cloudinary/cloudinary.types';
+import { SupabaseService } from 'src/modules/infrastructure/supabase/supabase.service';
+import { PostCommentEntity } from 'src/modules/post/submodules/post-comment/entities/post-comment.entity';
+import { UpdatePostCommentAttachmentUploadedFiles } from 'src/modules/post/submodules/post-comment/submodules/post-comment-attachment/types/post-comment-attachment.types';
+import { Routes } from 'src/core/enums/app.enums';
+import { v7 as uuid } from 'uuid';
+import * as path from 'path';
 
 @Injectable()
 export class PostCommentAttachmentService {
   constructor(
     private readonly prismaService: PrismaService,
-    private readonly cloudinaryService: CloudinaryService,
+    private readonly supabaseService: SupabaseService,
   ) {}
 
-  async findAllForComment(commentId: string): Promise<PostCommentAttachmentEntity[]> {
+  public async findAllForComment(
+    commentId: PostCommentEntity['id'],
+  ): Promise<PostCommentAttachmentEntity[]> {
     return this.prismaService.$transaction(async tx => {
       await tx.postComment.findUniqueOrThrow({ where: { id: commentId } });
       return tx.postCommentAttachment.findMany({ where: { commentId } });
     });
   }
 
-  async findById(id: string): Promise<PostCommentAttachmentEntity> {
+  public async findById(id: PostCommentEntity['id']): Promise<PostCommentAttachmentEntity> {
     return this.prismaService.postCommentAttachment.findUniqueOrThrow({ where: { id } });
   }
 
-  async setPostCommentAttachments(
-    commentId: string,
+  public async setPostCommentAttachments(
+    commentId: PostCommentEntity['id'],
     data: CreatePostCommentAttachmentDto[],
   ): Promise<PostCommentAttachmentEntity[]> {
     return this.prismaService.$transaction(async tx => {
       await tx.postCommentAttachment.deleteMany({ where: { commentId } });
-      await tx.postCommentAttachment.createMany({ data });
+      await tx.postCommentAttachment.createMany({
+        data: data.map(item => ({ ...item, commentId })),
+      });
 
       return tx.postCommentAttachment.findMany({ where: { commentId } });
     });
   }
 
-  async update(
-    id: string,
+  public async update(
+    id: PostCommentAttachmentEntity['id'],
     data: UpdatePostCommentAttachmentDto,
-    file?: Express.Multer.File,
+    files?: UpdatePostCommentAttachmentUploadedFiles,
   ): Promise<PostCommentAttachmentEntity> {
-    let uploader: IPrepareSingleResourceForUpload | undefined = undefined;
-
-    if (file) {
-      const attachment = await this.findById(id);
-      uploader = this.cloudinaryService.prepareSingleResourceForUpload(file, {
-        mapping: { [`${file.fieldname}`]: 'post_comment_attachments' },
-        beforeUpload: () => {
-          const destroyer = this.cloudinaryService.prepareSingleResourceForDelete({
-            ...attachment,
-            publicId: attachment.file,
-          });
-
-          destroyer.delete();
-        },
-      });
-
-      data = {
-        ...data,
-        file: uploader.resource.publicId,
-        resourceType: uploader.resource.resourceType,
-      };
-    }
-
-    if (!file && data.file !== undefined) {
-      throw new PrismaClientKnownRequestError('The file was not provided!', {
-        code: 'C2000',
-        clientVersion: '',
-      });
+    if (!files?.file?.length) {
+      throw new ConflictException(
+        'Cannot update post comment attachment. The attachment file was not provided.',
+      );
     }
 
     return this.prismaService.postCommentAttachment
-      .update({
-        data,
-        where: { id },
-      })
-      .then(response => {
-        if (uploader) uploader.upload();
-        return response;
+      .update({ data, where: { id } })
+      .then(postCommentAttachment => {
+        if (files?.file?.length) {
+          const file = files.file[0];
+
+          const filename = `${Routes.PostComments}/attachments/${uuid()}${path.extname(file.originalname)}`;
+
+          this.supabaseService.upload(file, filename).then(async response => {
+            if (response.file.filename) {
+              await this.prismaService.postCommentAttachment.update({
+                where: { id: postCommentAttachment.id },
+                data: { location: response.file.filename },
+              });
+            }
+          });
+        }
+
+        return postCommentAttachment;
       });
   }
 
-  async remove(id: string): Promise<PostCommentAttachmentEntity> {
-    return this.prismaService.postCommentAttachment.delete({ where: { id } }).then(response => {
-      const destroyer = this.cloudinaryService.prepareSingleResourceForDelete({
-        ...response,
-        publicId: response.file,
-      });
+  public async remove(id: PostCommentAttachmentEntity['id']): Promise<PostCommentAttachmentEntity> {
+    return this.prismaService.postCommentAttachment
+      .delete({ where: { id } })
+      .then(postCommentAttachment => {
+        this.supabaseService.remove([postCommentAttachment.location]);
 
-      destroyer.delete();
-      return response;
-    });
+        return postCommentAttachment;
+      });
   }
 }

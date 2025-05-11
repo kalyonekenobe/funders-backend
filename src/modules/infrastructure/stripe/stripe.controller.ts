@@ -65,7 +65,7 @@ export class StripeController {
   @Get('customers/:id/payment-methods')
   public async getStripeCustomerPaymentMethods(
     @Param('id') id: string,
-    @Query() query?: string,
+    @Query() query?: Record<string, string>,
   ): Promise<StripePaymentMethodEntity[]> {
     const options: GetCustomerPaymentMethodsOptions | undefined = deserializeQueryString(query);
 
@@ -87,7 +87,7 @@ export class StripeController {
   @Get('customers/:id/payment-intents')
   public async getStripeCustomerPaymentIntents(
     @Param('id') id: string,
-    @Query() query?: string,
+    @Query() query?: Record<string, string>,
   ): Promise<StripePaymentIntentEntity[]> {
     const options: GetCustomerPaymentIntentsOptions | undefined = deserializeQueryString(query);
 

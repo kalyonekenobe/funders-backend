@@ -47,7 +47,11 @@ export enum ConfigVariables {
   GoogleClientSecret = 'GOOGLE_CLIENT_SECRET',
   DiscordClientId = 'DISCORD_CLIENT_ID',
   DiscordClientSecret = 'DISCORD_CLIENT_SECRET',
+  SolanaRpcHttpEndpoint = 'SOLANA_RPC_HTTP_ENDPOINT',
   AuthMessageTemplate = 'AUTH_MESSAGE_TEMPLATE',
+  FundersCoreProgramId = 'FUNDERS_CORE_PROGRAM_ID',
+  FundersCoreProgramAdminPublicKey = 'FUNDERS_CORE_PROGRAM_ID_ADMIN_PUBLIC_KEY',
+  FundersCoreProgramAdminPrivateKey = 'FUNDERS_CORE_PROGRAM_ID_ADMIN_PRIVATE_KEY',
 }
 
 export enum Routes {
@@ -61,12 +65,21 @@ export enum Routes {
   PostDonations = 'post-donations',
   PostReactions = 'post-reactions',
   PostAttachments = 'post-attachments',
+  PostReports = 'post-reports',
+  PostCommentAttachments = 'post-comment-attachments',
+  PostCommentReactions = 'post-comment-reactions',
+  PostCommentReports = 'post-comment-reports',
   Followings = 'followings',
   CategoryToPost = 'posts/:id/categories',
+  ChatToUser = 'chats/:chatId/users',
+  ChatMessageAttachments = 'chat-message-attachments',
+  ChatMessageReactions = 'chat-message-reactions',
   UserRoles = 'user-roles',
   UserPenalties = 'user-penalties',
   UserReports = 'user-reports',
+  ChatRoles = 'chat-roles',
   Stripe = 'stripe',
+  Utils = 'utils',
 }
 
 export enum LogLevels {

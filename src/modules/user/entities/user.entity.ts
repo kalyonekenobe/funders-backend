@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { $Enums, User } from '@prisma/client';
+import { User, UserRegistrationMethods, UserRoles } from '@prisma/client';
 import { Transform } from 'class-transformer';
 import {
   IsDate,
@@ -15,7 +15,6 @@ import {
   MaxLength,
   ValidateIf,
 } from 'class-validator';
-import { ChatEntity } from 'src/modules/chat/entities/chat.entity';
 import { ChatMessageEntity } from 'src/modules/chat/submodules/chat-message/entities/chat-message.entity';
 import { PostEntity } from 'src/modules/post/entities/post.entity';
 import { PostCommentEntity } from 'src/modules/post/submodules/post-comment/entities/post-comment.entity';
@@ -26,6 +25,7 @@ import { FollowingEntity } from 'src/modules/user/submodules/following/entities/
 import { UserRoleEntity } from 'src/modules/user/submodules/user-role/entities/user-role.entity';
 import { UserPenaltyEntity } from 'src/modules/user/submodules/user-penalty/entities/user-penalty.entity';
 import { UserReportEntity } from 'src/modules/user/submodules/user-report/entities/user-report.entity';
+import { ChatToUserEntity } from 'src/modules/chat/submodules/chat-to-user/entities/chat-to-user.entity';
 
 export class UserEntity implements User {
   @ApiProperty({
@@ -40,13 +40,13 @@ export class UserEntity implements User {
 
   @ApiProperty({
     description: "User's registration method",
-    examples: Object.values($Enums.UserRegistrationMethods),
-    default: Object.values($Enums.UserRegistrationMethods)[0],
+    examples: Object.values(UserRegistrationMethods),
+    default: Object.values(UserRegistrationMethods)[0],
   })
-  @IsEnum($Enums.UserRegistrationMethods)
+  @IsEnum(UserRegistrationMethods)
   @IsNotEmpty()
   @IsDefined()
-  userRegistrationMethod: $Enums.UserRegistrationMethods;
+  userRegistrationMethod: UserRegistrationMethods;
 
   @ApiProperty({
     description: "User's role",
@@ -58,7 +58,7 @@ export class UserEntity implements User {
   @IsString()
   @IsNotEmpty()
   @IsDefined()
-  role: string;
+  role: UserRoles;
 
   @ApiProperty({
     description: "User's first name",
@@ -142,9 +142,8 @@ export class UserEntity implements User {
   @ValidateIf((_, value) => value)
   bio: string | null;
 
-  @ApiProperty({ description: "User's avatar path" })
+  @ApiProperty({ description: 'The image of the user' })
   @IsString()
-  @MaxLength(255)
   @ValidateIf((_, value) => value)
   image: string | null;
 
@@ -225,8 +224,8 @@ export class UserEntity implements User {
   @ApiProperty({ description: 'The nested array of outcoming user reports of this user' })
   outcomingUserReports?: UserReportEntity[];
 
-  @ApiProperty({ description: 'The nested array of chats of this user' })
-  chats?: ChatEntity[];
+  @ApiProperty({ description: 'The nested array of chat to user of this user' })
+  chatsToUsers?: ChatToUserEntity[];
 
   @ApiProperty({ description: 'The nested array of messages of this user' })
   messages?: ChatMessageEntity[];

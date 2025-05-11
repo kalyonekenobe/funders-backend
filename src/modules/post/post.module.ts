@@ -7,6 +7,7 @@ import { PostCategoryModule } from 'src/modules/post/submodules/post-category/po
 import { PostCommentModule } from 'src/modules/post/submodules/post-comment/post-comment.module';
 import { PostDonationModule } from 'src/modules/post/submodules/post-donation/post-donation.module';
 import { PostReactionModule } from 'src/modules/post/submodules/post-reaction/post-reaction.module';
+import { PostReportModule } from 'src/modules/post/submodules/post-report/post-report.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { PostReactionModule } from 'src/modules/post/submodules/post-reaction/po
     PostDonationModule,
     PostReactionModule,
     PostAttachmentModule,
+    PostReportModule,
   ],
   controllers: [PostController],
   providers: [PostService],

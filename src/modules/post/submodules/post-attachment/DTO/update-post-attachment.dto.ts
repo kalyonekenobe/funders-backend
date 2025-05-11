@@ -1,9 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, MaxLength, ValidateIf } from 'class-validator';
-import { PostAttachmentEntity } from '../entities/post-attachment.entity';
+import { IsOptional, IsString, MaxLength } from 'class-validator';
+import { PostAttachmentEntity } from 'src/modules/post/submodules/post-attachment/entities/post-attachment.entity';
 
 export class UpdatePostAttachmentDto
-  implements Omit<Partial<PostAttachmentEntity>, 'id' | 'postId'>
+  implements Pick<Partial<PostAttachmentEntity>, 'location' | 'filename'>
 {
   @ApiProperty({
     description: 'The filepath of post attachment',
@@ -16,8 +16,8 @@ export class UpdatePostAttachmentDto
   })
   @IsString()
   @MaxLength(255)
-  @ValidateIf((_, value) => value)
-  file?: string;
+  @IsOptional()
+  location?: string;
 
   @ApiProperty({
     description: 'Custom filename of the file of the post attachment',
@@ -26,16 +26,6 @@ export class UpdatePostAttachmentDto
   })
   @IsString()
   @MaxLength(255)
-  @ValidateIf((_, value) => value)
+  @IsOptional()
   filename?: string | null;
-
-  @ApiProperty({
-    description: 'Resource type of the file of the post attachment',
-    examples: ['raw', 'image', 'video'],
-    default: 'raw',
-  })
-  @IsString()
-  @MaxLength(255)
-  @ValidateIf((_, value) => value)
-  resourceType?: string;
 }

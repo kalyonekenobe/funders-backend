@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { UserRoles } from '@prisma/client';
 import { Transform } from 'class-transformer';
 import {
   IsDate,
@@ -36,7 +37,7 @@ export class UpdateUserDto
   @MaxLength(50)
   @IsString()
   @ValidateIf((_, value) => value)
-  role?: string;
+  role?: UserRoles;
 
   @ApiProperty({
     description: "User's first name",

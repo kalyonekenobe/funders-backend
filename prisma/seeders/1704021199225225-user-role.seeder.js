@@ -24,12 +24,12 @@ module.exports = {
       Permissions.REMOVE_OTHER_USERS_COMMENTS;
 
     const data = [
-      { name: 'Default', permissions: defaultUserPermissions },
+      { name: 'User', permissions: defaultUserPermissions },
       { name: 'Volunteer', permissions: volunteerPermissions },
       { name: 'Administrator', permissions: administratorPermissions },
     ];
 
-    await prisma.userRole.createMany({ data });
+    await prisma.userRole.createMany({ data, skipDuplicates: true });
   },
 
   async down() {

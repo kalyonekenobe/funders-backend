@@ -1,13 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Decimal } from '@prisma/client/runtime/library';
-import { Transform } from 'class-transformer';
-import { IsDecimal, IsDefined, IsNotEmpty, IsString, Validate, ValidateIf } from 'class-validator';
-import { DecimalMin } from 'src/core/validation/decorators/decimal-min.decorator';
-import { PostDonationEntity } from '../entities/post-donation.entity';
+import { Type } from 'class-transformer';
+import { IsNumber, IsOptional, IsString, Min } from 'class-validator';
 import { Prisma } from '@prisma/client';
+import { PostDonationEntity } from 'src/modules/post/submodules/post-donation/entities/post-donation.entity';
 
 export class UpdatePostDonationDto
-  implements Omit<Partial<PostDonationEntity>, 'id' | 'postId' | 'datetime'>
+  implements Pick<Partial<PostDonationEntity>, 'details' | 'amount'>
 {
   @ApiProperty({
     description: 'The payment info of the post donation',
@@ -15,21 +13,17 @@ export class UpdatePostDonationDto
     default: '{ "last4": "4242" }',
   })
   @IsString()
-  @IsNotEmpty()
-  @IsDefined()
-  @ValidateIf((_, value) => value)
-  paymentInfo?: string;
+  @IsOptional()
+  details?: string;
 
   @ApiProperty({
     description: 'The amount of money of the donation',
     examples: [1551.6, 1000.0, 8500.5],
     default: 8500.5,
   })
-  @Transform(value => new Decimal(value.value))
-  @Validate(DecimalMin, [0.01])
-  @IsDecimal()
-  @IsDefined()
-  @Transform(value => value.value.toString())
-  @ValidateIf((_, value) => value)
-  donation?: Decimal;
+  @Min(0.01)
+  @IsNumber()
+  @Type(() => Prisma.Decimal)
+  @IsOptional()
+  donation?: Prisma.Decimal;
 }

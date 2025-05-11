@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import * as path from 'path';
 import { CreateUserDto } from './DTO/create-user.dto';
-import { v4 as uuid } from 'uuid';
+import { v7 as uuid } from 'uuid';
 import { UserPublicEntity } from './entities/user-public.entity';
 import { UpdateUserDto } from './DTO/update-user.dto';
 import * as _ from 'lodash';

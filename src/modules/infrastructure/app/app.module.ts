@@ -4,6 +4,8 @@ import { JwtModule, JwtModuleOptions, JwtService } from '@nestjs/jwt';
 import { WinstonModule, WinstonModuleOptions } from 'nest-winston';
 import { ConfigVariables } from 'src/core/enums/app.enums';
 import { AuthModule } from 'src/modules/auth/auth.module';
+import { ChatModule } from 'src/modules/chat/chat.module';
+import { FundersCoreProgramModule } from 'src/modules/infrastructure/funders-core-program/funders-core-program.module';
 import { LoggerModule } from 'src/modules/infrastructure/logger/logger.module';
 import { LoggerMiddleware } from 'src/modules/infrastructure/logger/middlewares/logger.middleware';
 import { PasswordModule } from 'src/modules/infrastructure/password/password.module';
@@ -15,7 +17,9 @@ import { StripeModule } from 'src/modules/infrastructure/stripe/stripe.module';
 import { StripeModuleOptions } from 'src/modules/infrastructure/stripe/types/stripe.types';
 import { SupabaseModule } from 'src/modules/infrastructure/supabase/supabase.module';
 import { SupabaseModuleOptions } from 'src/modules/infrastructure/supabase/types/supabase.types';
+import { PostModule } from 'src/modules/post/post.module';
 import { UserModule } from 'src/modules/user/user.module';
+import { UtilsModule } from 'src/modules/utils/utils.module';
 import * as winston from 'winston';
 
 @Module({
@@ -100,10 +104,21 @@ import * as winston from 'winston';
       }),
       inject: [ConfigService],
     }),
+    FundersCoreProgramModule.registerAsync({
+      useFactory: async (configService: ConfigService) => ({
+        fundersCoreProgramId: configService.get<string>(ConfigVariables.FundersCoreProgramId) || '',
+        solanaRpcHttpEndpoint:
+          configService.get<string>(ConfigVariables.SolanaRpcHttpEndpoint) || '',
+      }),
+      inject: [ConfigService],
+    }),
     PrismaModule,
     LoggerModule,
     UserModule,
     AuthModule,
+    PostModule,
+    ChatModule,
+    UtilsModule,
   ],
 })
 export class AppModule implements NestModule {

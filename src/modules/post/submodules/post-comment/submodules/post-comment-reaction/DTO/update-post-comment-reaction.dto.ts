@@ -1,9 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsDefined, IsNotEmpty, IsString, MaxLength, ValidateIf } from 'class-validator';
+import { IsOptional, IsString, MaxLength } from 'class-validator';
 import { PostCommentReactionEntity } from '../entities/post-comment-reaction.entity';
+import { PostCommentReactions } from '@prisma/client';
 
 export class UpdatePostCommentReactionDto
-  implements Omit<Partial<PostCommentReactionEntity>, 'userId' | 'commentId' | 'datetime'>
+  implements Pick<Partial<PostCommentReactionEntity>, 'reaction'>
 {
   @ApiProperty({
     description: 'The reaction type of the post comment reaction',
@@ -12,8 +13,6 @@ export class UpdatePostCommentReactionDto
   })
   @MaxLength(50)
   @IsString()
-  @IsNotEmpty()
-  @IsDefined()
-  @ValidateIf((_, value) => value)
-  reactionType?: string;
+  @IsOptional()
+  reaction?: PostCommentReactions;
 }

@@ -1,8 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { PostCategoryEntity } from '../entities/post-category.entity';
 import { IsDefined, IsNotEmpty, IsString, Matches, MaxLength } from 'class-validator';
+import { PostCategoryEntity } from 'src/modules/post/submodules/post-category/entities/post-category.entity';
 
-export class CreatePostCategoryDto implements PostCategoryEntity {
+export class CreatePostCategoryDto implements Pick<PostCategoryEntity, 'name'> {
   @ApiProperty({
     description: 'Name of the post category',
     examples: ['Army', 'Talents', 'Poor people', 'Animals'],

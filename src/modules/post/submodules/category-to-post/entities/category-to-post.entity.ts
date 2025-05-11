@@ -58,9 +58,9 @@ export class CategoryToPostEntity implements CategoryToPost {
   @IsDefined()
   updatedAt: Date;
 
-  @ApiProperty({ description: 'The nested post object for this CategoriesOnPostsEntity' })
+  @ApiProperty({ description: 'The nested post object for this CategoryToPostEntity' })
   post?: PostEntity;
 
-  @ApiProperty({ description: 'The nested postCategory object for this CategoriesOnPostsEntity' })
+  @ApiProperty({ description: 'The nested postCategory object for this CategoryToPostEntity' })
   postCategory?: PostCategoryEntity;
 }

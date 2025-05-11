@@ -1,11 +1,8 @@
 import { Module } from '@nestjs/common';
-import { CloudinaryModule } from 'src/core/cloudinary/cloudinary.module';
-import { PrismaModule } from 'src/modules/infrastructure/prisma/prisma.module';
-import { PostCommentAttachmentController } from './post-comment-attachment.controller';
-import { PostCommentAttachmentService } from './post-comment-attachment.service';
+import { PostCommentAttachmentController } from 'src/modules/post/submodules/post-comment/submodules/post-comment-attachment/post-comment-attachment.controller';
+import { PostCommentAttachmentService } from 'src/modules/post/submodules/post-comment/submodules/post-comment-attachment/post-comment-attachment.service';
 
 @Module({
-  imports: [PrismaModule, CloudinaryModule],
   controllers: [PostCommentAttachmentController],
   providers: [PostCommentAttachmentService],
   exports: [PostCommentAttachmentService],

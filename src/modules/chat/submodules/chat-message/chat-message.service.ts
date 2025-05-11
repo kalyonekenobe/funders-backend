@@ -1,181 +1,184 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from 'src/modules/infrastructure/prisma/prisma.service';
-import { ChatMessageEntity } from './entities/chat-message.entity';
-import { CreateChatMessageDto } from './DTO/create-chat-message.dto';
-import { ChatMessageRequestBodyFiles } from './types/chat-message.types';
-import { CloudinaryService } from 'src/core/cloudinary/cloudinary.service';
+import { Prisma } from '@prisma/client';
+import { Routes } from 'src/core/enums/app.enums';
+import { ChatEntity } from 'src/modules/chat/entities/chat.entity';
+import { CreateChatMessageDto } from 'src/modules/chat/submodules/chat-message/DTO/create-chat-message.dto';
+import { ChatMessageEntity } from 'src/modules/chat/submodules/chat-message/entities/chat-message.entity';
 import {
-  ICloudinaryLikeResource,
-  IPrepareMultipleResourcesForDelete,
-  IPrepareMultipleResourcesForUpload,
-} from 'src/core/cloudinary/cloudinary.types';
-import { UpdateChatMessageDto } from './DTO/update-chat-message.dto';
+  CreateChatMessageUploadedFiles,
+  UpdateChatMessageUploadedFiles,
+} from 'src/modules/chat/submodules/chat-message/types/chat-message.types';
+import { SupabaseService } from 'src/modules/infrastructure/supabase/supabase.service';
+import { PrismaService } from 'src/modules/infrastructure/prisma/prisma.service';
+import { v7 as uuid } from 'uuid';
+import * as _ from 'lodash';
+import * as path from 'path';
+import { UpdateChatMessageDto } from 'src/modules/chat/submodules/chat-message/DTO/update-chat-message.dto';
 
 @Injectable()
 export class ChatMessageService {
   constructor(
     private readonly prismaService: PrismaService,
-    private readonly cloudinaryService: CloudinaryService,
+    private readonly supabaseService: SupabaseService,
   ) {}
 
-  async findAllForChat(chatId: string): Promise<ChatMessageEntity[]> {
+  public async findAll(options?: Prisma.ChatMessageFindManyArgs): Promise<ChatMessageEntity[]> {
+    if (options) {
+      return this.prismaService.chatMessage.findMany(options);
+    }
+
+    return this.prismaService.chatMessage.findMany();
+  }
+
+  public async findAllForChat(
+    chatId: ChatEntity['id'],
+    options?: Prisma.ChatMessageFindManyArgs,
+  ): Promise<ChatMessageEntity[]> {
     return this.prismaService.$transaction(async tx => {
       await tx.chat.findUniqueOrThrow({ where: { id: chatId } });
-      return tx.chatMessage.findMany({ where: { chatId }, include: { replies: true } });
+
+      return tx.chatMessage.findMany(
+        _.merge(options, { where: { chatId }, include: { replies: true } }),
+      );
     });
   }
 
-  async findById(id: string): Promise<ChatMessageEntity> {
-    return this.prismaService.chatMessage.findUniqueOrThrow({ where: { id } });
+  public async findOne(
+    options: Prisma.ChatMessageFindUniqueOrThrowArgs,
+  ): Promise<ChatMessageEntity> {
+    return this.prismaService.chatMessage.findUniqueOrThrow(options);
   }
 
-  async create(
-    chatId: string,
+  public async create(
     data: CreateChatMessageDto,
-    files?: ChatMessageRequestBodyFiles,
+    files?: CreateChatMessageUploadedFiles,
   ): Promise<ChatMessageEntity> {
-    const uploadResources: Express.Multer.File[] = [];
-    let uploader: IPrepareMultipleResourcesForUpload | undefined = undefined;
-
-    if (files?.attachments && files.attachments.length > 0)
-      uploadResources.push(...files.attachments);
-
-    if (uploadResources.length > 0) {
-      uploader = this.cloudinaryService.prepareMultipleResourcesForUpload(uploadResources, {
-        mapping: { attachments: 'chat_message_attachments' },
-      });
-    }
-
-    const uploadAttachments = uploader?.resources.filter(
-      resources => resources.fieldname === 'attachments',
-    );
-
-    const attachments = uploadAttachments
-      ? files?.attachments?.map((_, index) => ({
-          ...data.attachments?.[index],
-          file: uploadAttachments[index].publicId,
-          resourceType: uploadAttachments[index].resourceType,
-        })) || []
-      : [];
+    const { attachments: attachmentsInData, ...dataWithoutAttachments } = data;
 
     return this.prismaService.chatMessage
       .create({
         data: {
-          ...data,
-          chatId,
-          attachments: {
-            createMany: {
-              data: attachments,
-              skipDuplicates: false,
+          ...dataWithoutAttachments,
+          chatId: dataWithoutAttachments.chatId || '',
+          authorId: dataWithoutAttachments.authorId || '',
+          ...(attachmentsInData && {
+            attachments: {
+              createMany: {
+                data: attachmentsInData,
+                skipDuplicates: false,
+              },
             },
-          },
+          }),
         },
       })
-      .then(async response => {
-        if (uploader) await uploader.upload();
-        return response;
+      .then(async chatMessage => {
+        const attachments = files?.attachments;
+
+        if (attachments) {
+          Promise.allSettled(
+            attachments.map((attachment, index) => {
+              const filename = `${Routes.ChatMessageAttachments}/${uuid()}${path.extname(attachment.originalname)}`;
+
+              this.supabaseService.upload(attachment, filename).then(async response => {
+                if (response.file.filename) {
+                  await this.prismaService.chatMessageAttachment.create({
+                    data: {
+                      messageId: chatMessage.id,
+                      filename: attachmentsInData?.[index]?.filename,
+                      location: response.file.filename,
+                    },
+                  });
+                }
+              });
+            }),
+          );
+        }
+
+        return chatMessage;
       });
   }
 
-  async update(
+  public async update(
     id: string,
     data: UpdateChatMessageDto,
-    files?: ChatMessageRequestBodyFiles,
+    files?: UpdateChatMessageUploadedFiles,
   ): Promise<ChatMessageEntity> {
+    const { attachments: attachmentsInData, ...dataWithoutAttachments } = data;
+
     const chatMessage = await this.prismaService.chatMessage.findUniqueOrThrow({
       where: { id },
       select: { attachments: true },
     });
 
-    const uploadResources: Express.Multer.File[] = [];
-    const deleteResources: ICloudinaryLikeResource[] = [];
-    let uploader: IPrepareMultipleResourcesForUpload | undefined = undefined;
-    let destroyer: IPrepareMultipleResourcesForDelete | undefined = undefined;
-    let deleteAttachmentsOptions = {};
-
-    if (files?.attachments && files.attachments.length > 0)
-      uploadResources.push(...files.attachments);
-
-    if (uploadResources.length > 0) {
-      uploader = this.cloudinaryService.prepareMultipleResourcesForUpload(uploadResources, {
-        mapping: { attachments: 'chat_message_attachments' },
-      });
-    }
-
-    const uploadAttachments = uploader?.resources.filter(
-      resources => resources.fieldname === 'attachments',
-    );
-
-    const attachments = uploadAttachments
-      ? files?.attachments?.map((_, index) => ({
-          ...data.attachments?.[index],
-          file: uploadAttachments[index].publicId,
-          resourceType: uploadAttachments[index].resourceType,
-        })) || []
-      : [];
-
-    if (
+    const shouldAttachmentsBeDeleted =
       ((files?.attachments && files.attachments.length > 0) || files?.attachments !== undefined) &&
-      chatMessage.attachments.length > 0
-    ) {
-      deleteResources.push(
-        ...chatMessage.attachments.map(({ file, resourceType }) => ({
-          publicId: file,
-          resourceType,
-        })),
-      );
-
-      deleteAttachmentsOptions = { deleteMany: {} };
-    }
-
-    if (deleteResources.length > 0) {
-      destroyer = this.cloudinaryService.prepareMultipleResourcesForDelete(deleteResources);
-    }
+      chatMessage.attachments.length > 0;
 
     return this.prismaService.chatMessage
       .update({
         where: { id },
         data: {
-          ...data,
+          ...dataWithoutAttachments,
           attachments: {
-            ...deleteAttachmentsOptions,
-            createMany: {
-              data: attachments,
-              skipDuplicates: false,
-            },
+            ...(shouldAttachmentsBeDeleted && {
+              deleteMany: {},
+            }),
+            ...(attachmentsInData && {
+              createMany: {
+                data: attachmentsInData?.map(attachment => ({
+                  ...attachment,
+                  location: attachment.location || '',
+                })),
+                skipDuplicates: false,
+              },
+            }),
           },
         },
       })
-      .then(async response => {
-        if (uploader) await uploader.upload();
-        if (destroyer) destroyer.delete();
-        return response;
-      });
-  }
+      .then(async updatedChatMessage => {
+        const attachments = files?.attachments;
 
-  async remove(id: string): Promise<ChatMessageEntity> {
-    return this.prismaService.chatMessage
-      .delete({ where: { id }, include: { attachments: true } })
-      .then(response => {
-        const deleteResources: ICloudinaryLikeResource[] = [];
+        if (attachments) {
+          Promise.allSettled(
+            attachments.map((attachment, index) => {
+              const filename = `${Routes.ChatMessageAttachments}/${uuid()}${path.extname(attachment.originalname)}`;
 
-        if (response.attachments.length > 0) {
-          deleteResources.push(
-            ...response.attachments.map(({ file, resourceType }) => ({
-              publicId: file,
-              resourceType,
-            })),
+              this.supabaseService.upload(attachment, filename).then(async response => {
+                if (response.file.filename) {
+                  await this.prismaService.chatMessageAttachment.create({
+                    data: {
+                      messageId: updatedChatMessage.id,
+                      filename: attachmentsInData?.[index]?.filename,
+                      location: response.file.filename,
+                    },
+                  });
+                }
+              });
+            }),
           );
         }
 
-        if (deleteResources.length > 0) {
-          const destroyer =
-            this.cloudinaryService.prepareMultipleResourcesForDelete(deleteResources);
-
-          destroyer.delete();
+        if (shouldAttachmentsBeDeleted) {
+          this.supabaseService.remove(
+            chatMessage.attachments.map(attachment => attachment.location),
+          );
         }
 
-        return response;
+        return updatedChatMessage;
+      });
+  }
+
+  public async remove(id: string): Promise<ChatMessageEntity> {
+    return this.prismaService.chatMessage
+      .delete({ where: { id }, include: { attachments: true } })
+      .then(chatMessage => {
+        if (chatMessage.attachments.length) {
+          this.supabaseService.remove(
+            chatMessage.attachments.map(attachment => attachment.location),
+          );
+        }
+
+        return chatMessage;
       });
   }
 }

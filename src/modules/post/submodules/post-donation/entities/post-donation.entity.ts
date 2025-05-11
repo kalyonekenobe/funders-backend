@@ -1,21 +1,17 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { PostDonation, Prisma } from '@prisma/client';
-import { Decimal } from '@prisma/client/runtime/library';
 import { Transform } from 'class-transformer';
 import {
   IsDate,
-  IsDecimal,
+  IsNumber,
   IsDefined,
   IsNotEmpty,
   IsString,
   IsUUID,
-  Matches,
   MaxDate,
-  MaxLength,
-  Validate,
+  Min,
 } from 'class-validator';
-import { DecimalMin } from 'src/core/validation/decorators/decimal-min.decorator';
-import { PostEntity } from 'src/post/entities/post.entity';
+import { PostEntity } from 'src/modules/post/entities/post.entity';
 
 export class PostDonationEntity implements PostDonation {
   @ApiProperty({
@@ -46,21 +42,21 @@ export class PostDonationEntity implements PostDonation {
   @IsString()
   @IsNotEmpty()
   @IsDefined()
-  paymentInfo: Prisma.JsonValue;
+  details: Prisma.JsonValue;
 
   @ApiProperty({
     description: 'The amount of money of the donation',
     examples: [1551.6, 1000.0, 8500.5],
     default: 8500.5,
   })
-  @Transform(value => new Decimal(value.value))
-  @Validate(DecimalMin, [0.01])
-  @IsDecimal()
+  @Transform(value => new Prisma.Decimal(value.value))
+  @Min(0.01)
+  @IsNumber()
   @IsDefined()
-  donation: Decimal;
+  amount: Prisma.Decimal;
 
   @ApiProperty({
-    description: 'The date and time of the post donation',
+    description: 'The date and time of creation of the post donation',
     examples: [new Date('2024-01-03'), new Date('2023-11-02'), new Date('2023-06-30')],
     default: new Date('2023-06-30'),
   })
@@ -68,7 +64,18 @@ export class PostDonationEntity implements PostDonation {
   @MaxDate(new Date())
   @IsNotEmpty()
   @IsDefined()
-  datetime: Date;
+  createdAt: Date;
+
+  @ApiProperty({
+    description: 'The date and time of updating of the post donation',
+    examples: [new Date('2024-01-03'), new Date('2023-11-02'), new Date('2023-06-30')],
+    default: new Date('2023-06-30'),
+  })
+  @IsDate()
+  @MaxDate(new Date())
+  @IsNotEmpty()
+  @IsDefined()
+  updatedAt: Date;
 
   @ApiProperty({ description: 'The nested post object of this post donation' })
   post?: PostEntity;

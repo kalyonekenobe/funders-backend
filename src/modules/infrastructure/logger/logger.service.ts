@@ -39,7 +39,7 @@ export class LoggerService extends ConsoleLogger {
     return {
       ...(message instanceof Object ? { ...message } : { message }),
       module: (context || this.context)?.replace(/Service|Controller/i, ''),
-      service: 'nomadz-backend',
+      service: 'funders-backend',
       correlationId,
       trace,
     };

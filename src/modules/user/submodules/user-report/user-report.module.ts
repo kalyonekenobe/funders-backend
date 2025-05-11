@@ -5,5 +5,6 @@ import { UserReportService } from 'src/modules/user/submodules/user-report/user-
 @Module({
   controllers: [UserReportController],
   providers: [UserReportService],
+  exports: [UserReportService],
 })
 export class UserReportModule {}

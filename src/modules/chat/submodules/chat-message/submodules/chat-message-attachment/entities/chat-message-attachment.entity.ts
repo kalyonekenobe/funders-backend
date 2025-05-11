@@ -1,7 +1,16 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { ChatMessageAttachment } from '@prisma/client';
-import { IsDefined, IsNotEmpty, IsString, IsUUID, MaxLength, ValidateIf } from 'class-validator';
-import { ChatMessageEntity } from 'src/chat-message/entities/chat-message.entity';
+import {
+  IsDate,
+  IsDefined,
+  IsNotEmpty,
+  IsString,
+  IsUUID,
+  MaxDate,
+  MaxLength,
+  ValidateIf,
+} from 'class-validator';
+import { ChatMessageEntity } from 'src/modules/chat/submodules/chat-message/entities/chat-message.entity';
 
 export class ChatMessageAttachmentEntity implements ChatMessageAttachment {
   @ApiProperty({
@@ -25,18 +34,14 @@ export class ChatMessageAttachmentEntity implements ChatMessageAttachment {
   messageId: string;
 
   @ApiProperty({
-    description: 'The filepath of chat message attachment',
-    examples: [
-      'chat_message_attachments/989d32c2-abd4-43d3-a420-ee175ae16b98.pptx',
-      'chat_message_attachments/b7af9cd4-5533-4737-862b-78bce985c987.jpg',
-      'chat_message_attachments/jg741k58-9471-5432-581g-25fal951o571.txt',
-    ],
-    default: 'chat_message_attachments/jg741k58-9471-5432-581g-25fal951o571.txt',
+    description: 'The location of the chat message attachment',
+    examples: ['https://supabase.com/funders/image.jpg'],
+    default: 'https://supabase.com/funders/image.jpg',
   })
   @IsString()
-  @MaxLength(255)
+  @IsNotEmpty()
   @IsDefined()
-  file: string;
+  location: string;
 
   @ApiProperty({
     description: 'Custom filename of the file of the chat message attachment',
@@ -49,14 +54,26 @@ export class ChatMessageAttachmentEntity implements ChatMessageAttachment {
   filename: string | null;
 
   @ApiProperty({
-    description: 'Resource type of the file of the chat message attachment',
-    examples: ['raw', 'image', 'video'],
-    default: 'raw',
+    description: 'The date and time the chat message attachment was created',
+    examples: [new Date('2024-01-03'), new Date('2023-11-02'), new Date('2023-06-30')],
+    default: new Date('2023-06-30'),
   })
-  @IsString()
-  @MaxLength(255)
+  @IsDate()
+  @MaxDate(new Date())
+  @IsNotEmpty()
   @IsDefined()
-  resourceType: string;
+  createdAt: Date;
+
+  @ApiProperty({
+    description: 'The date and time the chat message attachment was updated',
+    examples: [new Date('2024-01-03'), new Date('2023-11-02'), new Date('2023-06-30')],
+    default: new Date('2023-11-02'),
+  })
+  @IsDate()
+  @MaxDate(new Date())
+  @IsNotEmpty()
+  @IsDefined()
+  updatedAt: Date;
 
   @ApiProperty({ description: 'Nested message object for this chat message attachment' })
   message?: ChatMessageEntity;

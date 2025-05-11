@@ -25,11 +25,14 @@ export class UserRoleService {
     return this.prismaService.userRole.create({ data });
   }
 
-  public async update(name: string, data: UpdateUserRoleDto): Promise<UserRoleEntity> {
+  public async update(
+    name: UserRoleEntity['name'],
+    data: UpdateUserRoleDto,
+  ): Promise<UserRoleEntity> {
     return this.prismaService.userRole.update({ data, where: { name } });
   }
 
-  public async remove(name: string): Promise<UserRoleEntity> {
+  public async remove(name: UserRoleEntity['name']): Promise<UserRoleEntity> {
     return this.prismaService.userRole.delete({ where: { name } });
   }
 }

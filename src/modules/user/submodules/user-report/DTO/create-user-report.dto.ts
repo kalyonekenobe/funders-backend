@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { $Enums } from '@prisma/client';
+import { UserReportReasons } from '@prisma/client';
 import { IsDefined, IsEnum, IsNotEmpty, IsString, IsUUID, ValidateIf } from 'class-validator';
 import { UserReportEntity } from 'src/modules/user/submodules/user-report/entities/user-report.entity';
 
@@ -30,13 +30,13 @@ export class CreateUserReportDto
 
   @ApiProperty({
     description: 'The reason of the user report',
-    examples: Object.values($Enums.UserReportReasons),
-    default: Object.values($Enums.UserReportReasons)[0],
+    examples: Object.values(UserReportReasons),
+    default: Object.values(UserReportReasons)[0],
   })
-  @IsEnum($Enums.UserReportReasons)
+  @IsEnum(UserReportReasons)
   @IsNotEmpty()
   @IsDefined()
-  reason: $Enums.UserReportReasons;
+  reason: UserReportReasons;
 
   @ApiProperty({
     description: 'The user penalty note',

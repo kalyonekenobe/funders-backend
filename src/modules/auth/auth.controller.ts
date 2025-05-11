@@ -10,7 +10,7 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { RoutesApiTags } from 'src/core/constants';
-import { Routes } from 'src/core/enums/app.enums';
+import { ConfigVariables, Routes } from 'src/core/enums/app.enums';
 import { AuthService } from 'src/modules/auth/auth.service';
 import { Auth } from 'src/core/decorators/auth.decorator';
 import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
@@ -28,11 +28,15 @@ import { LoginWithGoogleDto } from 'src/modules/auth/DTO/login-with-google.dto';
 import { LoginWithDiscordDto } from 'src/modules/auth/DTO/login-with-discord.dto';
 import { LoginWithSolanaWalletDto } from 'src/modules/auth/DTO/login-with-solana-wallet.dto';
 import { LoginResponse, RefreshResponse, RegisterResponse } from 'src/core/types/auth.types';
+import { ConfigService } from '@nestjs/config';
 
 @ApiTags(RoutesApiTags[Routes.Auth])
 @Controller(Routes.Auth)
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly configService: ConfigService,
+  ) {}
 
   @Auth(JwtAuthGuard)
   @ApiOkResponse({ description: 'The authenticated user.', type: UserPublicEntity })
@@ -67,12 +71,24 @@ export class AuthController {
 
     return response
       .status(HttpStatus.CREATED)
-      .cookie(process.env.ACCESS_TOKEN_COOKIE_NAME || 'Funders-Access-Token', user.accessToken, {
-        httpOnly: true,
-      })
-      .cookie(process.env.REFRESH_TOKEN_COOKIE_NAME || 'Funders-Refresh-Token', user.refreshToken, {
-        httpOnly: true,
-      })
+      .cookie(
+        this.configService.get<string>(ConfigVariables.CookieAccessTokenName) ||
+          'Funders-Access-Token',
+        user.accessToken,
+        {
+          httpOnly: true,
+          domain: this.configService.get<string>(ConfigVariables.CookieDomain),
+        },
+      )
+      .cookie(
+        this.configService.get<string>(ConfigVariables.CookieRefreshTokenName) ||
+          'Funders-Refresh-Token',
+        user.refreshToken,
+        {
+          httpOnly: true,
+          domain: this.configService.get<string>(ConfigVariables.CookieDomain),
+        },
+      )
       .json(user);
   }
 
@@ -97,12 +113,24 @@ export class AuthController {
 
     return response
       .status(HttpStatus.CREATED)
-      .cookie(process.env.ACCESS_TOKEN_COOKIE_NAME || 'Funders-Access-Token', user.accessToken, {
-        httpOnly: true,
-      })
-      .cookie(process.env.REFRESH_TOKEN_COOKIE_NAME || 'Funders-Refresh-Token', user.refreshToken, {
-        httpOnly: true,
-      })
+      .cookie(
+        this.configService.get<string>(ConfigVariables.CookieAccessTokenName) ||
+          'Funders-Access-Token',
+        user.accessToken,
+        {
+          httpOnly: true,
+          domain: this.configService.get<string>(ConfigVariables.CookieDomain),
+        },
+      )
+      .cookie(
+        this.configService.get<string>(ConfigVariables.CookieRefreshTokenName) ||
+          'Funders-Refresh-Token',
+        user.refreshToken,
+        {
+          httpOnly: true,
+          domain: this.configService.get<string>(ConfigVariables.CookieDomain),
+        },
+      )
       .json(user);
   }
 
@@ -127,12 +155,24 @@ export class AuthController {
 
     return response
       .status(HttpStatus.CREATED)
-      .cookie(process.env.ACCESS_TOKEN_COOKIE_NAME || 'Funders-Access-Token', user.accessToken, {
-        httpOnly: true,
-      })
-      .cookie(process.env.REFRESH_TOKEN_COOKIE_NAME || 'Funders-Refresh-Token', user.refreshToken, {
-        httpOnly: true,
-      })
+      .cookie(
+        this.configService.get<string>(ConfigVariables.CookieAccessTokenName) ||
+          'Funders-Access-Token',
+        user.accessToken,
+        {
+          httpOnly: true,
+          domain: this.configService.get<string>(ConfigVariables.CookieDomain),
+        },
+      )
+      .cookie(
+        this.configService.get<string>(ConfigVariables.CookieRefreshTokenName) ||
+          'Funders-Refresh-Token',
+        user.refreshToken,
+        {
+          httpOnly: true,
+          domain: this.configService.get<string>(ConfigVariables.CookieDomain),
+        },
+      )
       .json(user);
   }
 
@@ -157,12 +197,24 @@ export class AuthController {
 
     return response
       .status(HttpStatus.CREATED)
-      .cookie(process.env.ACCESS_TOKEN_COOKIE_NAME || 'Funders-Access-Token', user.accessToken, {
-        httpOnly: true,
-      })
-      .cookie(process.env.REFRESH_TOKEN_COOKIE_NAME || 'Funders-Refresh-Token', user.refreshToken, {
-        httpOnly: true,
-      })
+      .cookie(
+        this.configService.get<string>(ConfigVariables.CookieAccessTokenName) ||
+          'Funders-Access-Token',
+        user.accessToken,
+        {
+          httpOnly: true,
+          domain: this.configService.get<string>(ConfigVariables.CookieDomain),
+        },
+      )
+      .cookie(
+        this.configService.get<string>(ConfigVariables.CookieRefreshTokenName) ||
+          'Funders-Refresh-Token',
+        user.refreshToken,
+        {
+          httpOnly: true,
+          domain: this.configService.get<string>(ConfigVariables.CookieDomain),
+        },
+      )
       .json(user);
   }
 
@@ -184,12 +236,24 @@ export class AuthController {
 
     return response
       .status(HttpStatus.CREATED)
-      .cookie(process.env.ACCESS_TOKEN_COOKIE_NAME || 'Funders-Access-Token', user.accessToken, {
-        httpOnly: true,
-      })
-      .cookie(process.env.REFRESH_TOKEN_COOKIE_NAME || 'Funders-Refresh-Token', user.refreshToken, {
-        httpOnly: true,
-      })
+      .cookie(
+        this.configService.get<string>(ConfigVariables.CookieAccessTokenName) ||
+          'Funders-Access-Token',
+        user.accessToken,
+        {
+          httpOnly: true,
+          domain: this.configService.get<string>(ConfigVariables.CookieDomain),
+        },
+      )
+      .cookie(
+        this.configService.get<string>(ConfigVariables.CookieRefreshTokenName) ||
+          'Funders-Refresh-Token',
+        user.refreshToken,
+        {
+          httpOnly: true,
+          domain: this.configService.get<string>(ConfigVariables.CookieDomain),
+        },
+      )
       .json(user);
   }
 
@@ -211,12 +275,24 @@ export class AuthController {
 
     return response
       .status(HttpStatus.CREATED)
-      .cookie(process.env.ACCESS_TOKEN_COOKIE_NAME || 'Funders-Access-Token', user.accessToken, {
-        httpOnly: true,
-      })
-      .cookie(process.env.REFRESH_TOKEN_COOKIE_NAME || 'Funders-Refresh-Token', user.refreshToken, {
-        httpOnly: true,
-      })
+      .cookie(
+        this.configService.get<string>(ConfigVariables.CookieAccessTokenName) ||
+          'Funders-Access-Token',
+        user.accessToken,
+        {
+          httpOnly: true,
+          domain: this.configService.get<string>(ConfigVariables.CookieDomain),
+        },
+      )
+      .cookie(
+        this.configService.get<string>(ConfigVariables.CookieRefreshTokenName) ||
+          'Funders-Refresh-Token',
+        user.refreshToken,
+        {
+          httpOnly: true,
+          domain: this.configService.get<string>(ConfigVariables.CookieDomain),
+        },
+      )
       .json(user);
   }
 
@@ -238,12 +314,24 @@ export class AuthController {
 
     return response
       .status(HttpStatus.CREATED)
-      .cookie(process.env.ACCESS_TOKEN_COOKIE_NAME || 'Funders-Access-Token', user.accessToken, {
-        httpOnly: true,
-      })
-      .cookie(process.env.REFRESH_TOKEN_COOKIE_NAME || 'Funders-Refresh-Token', user.refreshToken, {
-        httpOnly: true,
-      })
+      .cookie(
+        this.configService.get<string>(ConfigVariables.CookieAccessTokenName) ||
+          'Funders-Access-Token',
+        user.accessToken,
+        {
+          httpOnly: true,
+          domain: this.configService.get<string>(ConfigVariables.CookieDomain),
+        },
+      )
+      .cookie(
+        this.configService.get<string>(ConfigVariables.CookieRefreshTokenName) ||
+          'Funders-Refresh-Token',
+        user.refreshToken,
+        {
+          httpOnly: true,
+          domain: this.configService.get<string>(ConfigVariables.CookieDomain),
+        },
+      )
       .json(user);
   }
 
@@ -265,12 +353,24 @@ export class AuthController {
 
     return response
       .status(HttpStatus.CREATED)
-      .cookie(process.env.ACCESS_TOKEN_COOKIE_NAME || 'Funders-Access-Token', user.accessToken, {
-        httpOnly: true,
-      })
-      .cookie(process.env.REFRESH_TOKEN_COOKIE_NAME || 'Funders-Refresh-Token', user.refreshToken, {
-        httpOnly: true,
-      })
+      .cookie(
+        this.configService.get<string>(ConfigVariables.CookieAccessTokenName) ||
+          'Funders-Access-Token',
+        user.accessToken,
+        {
+          httpOnly: true,
+          domain: this.configService.get<string>(ConfigVariables.CookieDomain),
+        },
+      )
+      .cookie(
+        this.configService.get<string>(ConfigVariables.CookieRefreshTokenName) ||
+          'Funders-Refresh-Token',
+        user.refreshToken,
+        {
+          httpOnly: true,
+          domain: this.configService.get<string>(ConfigVariables.CookieDomain),
+        },
+      )
       .json(user);
   }
 
@@ -297,12 +397,24 @@ export class AuthController {
 
     return response
       .status(HttpStatus.CREATED)
-      .cookie(process.env.ACCESS_TOKEN_COOKIE_NAME || 'Funders-Access-Token', accessToken, {
-        httpOnly: true,
-      })
-      .cookie(process.env.REFRESH_TOKEN_COOKIE_NAME || 'Funders-Refresh-Token', refreshToken, {
-        httpOnly: true,
-      })
+      .cookie(
+        this.configService.get<string>(ConfigVariables.CookieAccessTokenName) ||
+          'Funders-Access-Token',
+        accessToken,
+        {
+          httpOnly: true,
+          domain: this.configService.get<string>(ConfigVariables.CookieDomain),
+        },
+      )
+      .cookie(
+        this.configService.get<string>(ConfigVariables.CookieRefreshTokenName) ||
+          'Funders-Refresh-Token',
+        refreshToken,
+        {
+          httpOnly: true,
+          domain: this.configService.get<string>(ConfigVariables.CookieDomain),
+        },
+      )
       .json({ accessToken, refreshToken });
   }
 
@@ -324,12 +436,22 @@ export class AuthController {
 
     return response
       .status(HttpStatus.CREATED)
-      .clearCookie(process.env.ACCESS_TOKEN_COOKIE_NAME || 'Funders-Access-Token', {
-        httpOnly: true,
-      })
-      .clearCookie(process.env.REFRESH_TOKEN_COOKIE_NAME || 'Funders-Refresh-Token', {
-        httpOnly: true,
-      })
+      .clearCookie(
+        this.configService.get<string>(ConfigVariables.CookieAccessTokenName) ||
+          'Funders-Access-Token',
+        {
+          httpOnly: true,
+          domain: this.configService.get<string>(ConfigVariables.CookieDomain),
+        },
+      )
+      .clearCookie(
+        this.configService.get<string>(ConfigVariables.CookieRefreshTokenName) ||
+          'Funders-Refresh-Token',
+        {
+          httpOnly: true,
+          domain: this.configService.get<string>(ConfigVariables.CookieDomain),
+        },
+      )
       .json(user);
   }
 }

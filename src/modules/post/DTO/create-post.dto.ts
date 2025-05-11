@@ -2,30 +2,29 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Decimal } from '@prisma/client/runtime/library';
 import {
   IsBoolean,
-  IsDecimal,
+  IsDate,
+  IsNumber,
   IsDefined,
   IsNotEmpty,
   IsString,
   IsUUID,
   Matches,
+  MaxDate,
   MaxLength,
-  Validate,
+  Min,
   ValidateIf,
+  IsOptional,
 } from 'class-validator';
 import { PostEntity } from '../entities/post.entity';
-import { Transform } from 'class-transformer';
-import { DecimalMin } from 'src/core/validation/decorators/decimal-min.decorator';
-import { CreatePostAttachmentDto } from 'src/post-attachment/dto/create-post-attachment.dto';
-import { CreateCategoriesOnPostsDto } from 'src/categories-on-posts/dto/create-categories-on-posts.dto';
+import { Transform, Type } from 'class-transformer';
+import { CreateCategoryToPostDto } from 'src/modules/post/submodules/category-to-post/DTO/create-category-to-post.dto';
+import { CreatePostAttachmentDto } from 'src/modules/post/submodules/post-attachment/DTO/create-post-attachment.dto';
 
-type CreatePost = Omit<
-  PostEntity,
-  'id' | 'createdAt' | 'updatedAt' | 'removedAt' | 'attachments' | 'categories' | 'isDraft'
-> & {
-  categories?: Omit<CreateCategoriesOnPostsDto, 'postId'>[];
-  attachments?: Omit<CreatePostAttachmentDto, 'postId'>[];
-  isDraft?: boolean;
-};
+type CreatePost = Pick<PostEntity, 'title' | 'content' | 'image' | 'fundsToBeRaised'> &
+  Pick<Partial<PostEntity>, 'authorId' | 'isDraft' | 'deadline'> & {
+    categories?: Omit<CreateCategoryToPostDto, 'postId'>[];
+    attachments?: Omit<CreatePostAttachmentDto, 'postId'>[];
+  };
 
 export class CreatePostDto implements CreatePost {
   @ApiProperty({
@@ -34,9 +33,8 @@ export class CreatePostDto implements CreatePost {
     default: 'b7af9cd4-5533-4737-862b-78bce985c987',
   })
   @IsUUID()
-  @IsNotEmpty()
-  @IsDefined()
-  authorId: string;
+  @IsOptional()
+  authorId?: string;
 
   @ApiProperty({
     description: 'The title of the post',
@@ -77,11 +75,10 @@ export class CreatePostDto implements CreatePost {
     examples: [10000.5, 1234.41, 8950],
     default: 8950,
   })
-  @Transform(value => Number(value.value))
-  @Validate(DecimalMin, [0.01])
-  @IsDecimal()
+  @Min(0.01)
+  @IsNumber()
+  @Type(() => Number)
   @IsDefined()
-  @Transform(value => value.value.toString())
   fundsToBeRaised: Decimal;
 
   @ApiProperty({ description: 'The image path of the post' })
@@ -96,13 +93,23 @@ export class CreatePostDto implements CreatePost {
     default: false,
   })
   @IsBoolean()
-  @Transform(value => Boolean(value))
+  @Transform(({ value }) => value === 'true' || value === true || value === 1)
   @ValidateIf((_, value) => value)
   isDraft?: boolean;
 
+  @ApiProperty({
+    description: 'The date and time the post has to raise the money',
+    examples: [new Date('2024-01-03'), new Date('2023-11-02'), new Date('2023-06-30')],
+    default: new Date('2024-01-03'),
+  })
+  @IsDate()
+  @MaxDate(new Date())
+  @ValidateIf((_, value) => value)
+  deadline?: Date | null;
+
   @ApiProperty({ description: 'The nested array of categories of this post' })
   @ValidateIf((_, value) => value)
-  categories?: Omit<CreateCategoriesOnPostsDto, 'postId'>[];
+  categories?: Omit<CreateCategoryToPostDto, 'postId'>[];
 
   @ApiProperty({ description: 'The nested array of attachments of this post' })
   @ValidateIf((_, value) => value)

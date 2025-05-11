@@ -1,7 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { PostCategory } from '@prisma/client';
-import { IsDefined, IsNotEmpty, IsString, Matches, MaxLength } from 'class-validator';
-import { PostEntity } from 'src/post/entities/post.entity';
+import { CategoryToPost, PostCategory } from '@prisma/client';
+import {
+  IsDate,
+  IsDefined,
+  IsNotEmpty,
+  IsString,
+  Matches,
+  MaxDate,
+  MaxLength,
+} from 'class-validator';
 
 export class PostCategoryEntity implements PostCategory {
   @ApiProperty({
@@ -17,7 +24,27 @@ export class PostCategoryEntity implements PostCategory {
   name: string;
 
   @ApiProperty({
-    description: 'The nested array of posts which have this category',
+    description: 'The date and time of creation of the post category',
+    examples: [new Date('2024-01-03'), new Date('2023-11-02'), new Date('2023-06-30')],
+    default: new Date('2023-06-30'),
   })
-  posts?: PostEntity[];
+  @IsDate()
+  @MaxDate(new Date())
+  @IsNotEmpty()
+  @IsDefined()
+  createdAt: Date;
+
+  @ApiProperty({
+    description: 'The date and time of creation of the post category',
+    examples: [new Date('2024-01-03'), new Date('2023-11-02'), new Date('2023-06-30')],
+    default: new Date('2023-06-30'),
+  })
+  @IsDate()
+  @MaxDate(new Date())
+  @IsNotEmpty()
+  @IsDefined()
+  updatedAt: Date;
+
+  @ApiProperty({ description: 'The nested array of category to posts which have this category' })
+  categoriesToPosts?: CategoryToPost[];
 }

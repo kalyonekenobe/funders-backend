@@ -1,19 +1,16 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsDefined, IsNotEmpty, IsString, MaxLength, ValidateIf } from 'class-validator';
-import { PostReactionEntity } from '../entities/post-reaction.entity';
+import { IsEnum, IsOptional, MaxLength } from 'class-validator';
+import { PostReactions } from '@prisma/client';
+import { PostReactionEntity } from 'src/modules/post/submodules/post-reaction/entities/post-reaction.entity';
 
-export class UpdatePostReactionDto
-  implements Omit<Partial<PostReactionEntity>, 'userId' | 'postId' | 'datetime'>
-{
+export class UpdatePostReactionDto implements Pick<Partial<PostReactionEntity>, 'reaction'> {
   @ApiProperty({
     description: 'The reaction type of the post reaction',
-    examples: ['Like', 'Dislike', 'Crying', 'Heart', 'Laugh', 'Anger'],
-    default: 'Like',
+    examples: Object.values(PostReactions),
+    default: Object.values(PostReactions)[0],
   })
   @MaxLength(50)
-  @IsString()
-  @IsNotEmpty()
-  @IsDefined()
-  @ValidateIf((_, value) => value)
-  reactionType?: string;
+  @IsEnum(PostReactions)
+  @IsOptional()
+  reaction?: PostReactions;
 }

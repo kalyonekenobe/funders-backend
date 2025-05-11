@@ -1,4 +1,4 @@
-import { UserPublicEntity } from 'src/user/entities/user-public.entity';
+import { UserPublicEntity } from 'src/modules/user/entities/user-public.entity';
 
 export interface LoginResponse extends UserPublicEntity {
   accessToken: string;

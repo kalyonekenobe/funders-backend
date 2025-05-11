@@ -1,19 +1,30 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsDefined, IsNotEmpty, IsString, IsUUID, MaxLength } from 'class-validator';
+import { IsDefined, IsNotEmpty, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
 import { PostCommentReactionEntity } from '../entities/post-comment-reaction.entity';
+import { PostCommentReactions } from '@prisma/client';
 
 export class CreatePostCommentReactionDto
-  implements Omit<PostCommentReactionEntity, 'commentId' | 'datetime'>
+  implements
+    Pick<PostCommentReactionEntity, 'reaction'>,
+    Pick<Partial<PostCommentReactionEntity>, 'userId' | 'commentId'>
 {
+  @ApiProperty({
+    description: 'Post comment uuid',
+    examples: ['b7af9cd4-5533-4737-862b-78bce985c987', '989d32c2-abd4-43d3-a420-ee175ae16b98'],
+    default: '989d32c2-abd4-43d3-a420-ee175ae16b98',
+  })
+  @IsUUID()
+  @IsOptional()
+  commentId?: string;
+
   @ApiProperty({
     description: "User's uuid",
     examples: ['b7af9cd4-5533-4737-862b-78bce985c987', '989d32c2-abd4-43d3-a420-ee175ae16b98'],
     default: 'b7af9cd4-5533-4737-862b-78bce985c987',
   })
   @IsUUID()
-  @IsNotEmpty()
-  @IsDefined()
-  userId: string;
+  @IsOptional()
+  userId?: string;
 
   @ApiProperty({
     description: 'The reaction type of the post comment reaction',
@@ -24,5 +35,5 @@ export class CreatePostCommentReactionDto
   @IsString()
   @IsNotEmpty()
   @IsDefined()
-  reactionType: string;
+  reaction: PostCommentReactions;
 }

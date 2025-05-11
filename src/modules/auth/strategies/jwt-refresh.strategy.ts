@@ -37,6 +37,7 @@ export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh'
 
     return await this.userService.findOne({
       where: { id: payload.userId.toString(), refreshToken },
+      include: { userRole: true },
     });
   }
 }

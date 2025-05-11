@@ -4,7 +4,7 @@ module.exports = {
   async up() {
     const users = await prisma.user.findMany({
       where: {
-        OR: [{ role: 'Default' }, { role: 'Volunteer' }],
+        OR: [{ role: 'User' }, { role: 'Volunteer' }],
       },
       select: {
         id: true,

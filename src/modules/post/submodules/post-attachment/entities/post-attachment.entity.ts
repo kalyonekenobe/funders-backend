@@ -1,7 +1,16 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { PostAttachment } from '@prisma/client';
-import { IsDefined, IsNotEmpty, IsString, IsUUID, MaxLength, ValidateIf } from 'class-validator';
-import { PostEntity } from 'src/post/entities/post.entity';
+import {
+  IsDate,
+  IsDefined,
+  IsNotEmpty,
+  IsString,
+  IsUUID,
+  MaxDate,
+  MaxLength,
+  ValidateIf,
+} from 'class-validator';
+import { PostEntity } from 'src/modules/post/entities/post.entity';
 
 export class PostAttachmentEntity implements PostAttachment {
   @ApiProperty({
@@ -36,7 +45,7 @@ export class PostAttachmentEntity implements PostAttachment {
   @IsString()
   @MaxLength(255)
   @IsDefined()
-  file: string;
+  location: string;
 
   @ApiProperty({
     description: 'Custom filename of the file of the post attachment',
@@ -49,14 +58,26 @@ export class PostAttachmentEntity implements PostAttachment {
   filename: string | null;
 
   @ApiProperty({
-    description: 'Resource type of the file of the post attachment',
-    examples: ['raw', 'image', 'video'],
-    default: 'raw',
+    description: 'The date and time of creation of the post comment attachment',
+    examples: [new Date('2024-01-03'), new Date('2023-11-02'), new Date('2023-06-30')],
+    default: new Date('2023-06-30'),
   })
-  @IsString()
-  @MaxLength(255)
+  @IsDate()
+  @MaxDate(new Date())
+  @IsNotEmpty()
   @IsDefined()
-  resourceType: string;
+  createdAt: Date;
+
+  @ApiProperty({
+    description: 'The date and time of updating of the post comment attachment',
+    examples: [new Date('2024-01-03'), new Date('2023-11-02'), new Date('2023-06-30')],
+    default: new Date('2023-06-30'),
+  })
+  @IsDate()
+  @MaxDate(new Date())
+  @IsNotEmpty()
+  @IsDefined()
+  updatedAt: Date;
 
   @ApiProperty({ description: 'Nested post object for this post attachment' })
   post?: PostEntity;

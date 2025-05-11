@@ -1,8 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsDefined, IsNotEmpty, IsString, IsUUID, MaxLength, ValidateIf } from 'class-validator';
-import { ChatMessageAttachmentEntity } from '../entities/chat-message-attachment.entity';
+import { ChatMessageAttachmentEntity } from 'src/modules/chat/submodules/chat-message/submodules/chat-message-attachment/entities/chat-message-attachment.entity';
 
-export class CreateChatMessageAttachmentDto implements Omit<ChatMessageAttachmentEntity, 'id'> {
+export class CreateChatMessageAttachmentDto
+  implements
+    Pick<ChatMessageAttachmentEntity, 'messageId' | 'location'>,
+    Pick<Partial<ChatMessageAttachmentEntity>, 'filename'>
+{
   @ApiProperty({
     description: 'The uuid of chat message of the chat message attachment',
     examples: ['b7af9cd4-5533-4737-862b-78bce985c987', '989d32c2-abd4-43d3-a420-ee175ae16b98'],
@@ -14,18 +18,14 @@ export class CreateChatMessageAttachmentDto implements Omit<ChatMessageAttachmen
   messageId: string;
 
   @ApiProperty({
-    description: 'The filepath of chat message attachment',
-    examples: [
-      'chat_message_attachments/989d32c2-abd4-43d3-a420-ee175ae16b98.pptx',
-      'chat_message_attachments/b7af9cd4-5533-4737-862b-78bce985c987.jpg',
-      'chat_message_attachments/jg741k58-9471-5432-581g-25fal951o571.txt',
-    ],
-    default: 'chat_message_attachments/jg741k58-9471-5432-581g-25fal951o571.txt',
+    description: 'The location of the chat message attachment',
+    examples: ['https://supabase.com/funders/image.jpg'],
+    default: 'https://supabase.com/funders/image.jpg',
   })
   @IsString()
-  @MaxLength(255)
+  @IsNotEmpty()
   @IsDefined()
-  file: string;
+  location: string;
 
   @ApiProperty({
     description: 'Custom filename of the file of the chat message attachment',
@@ -35,15 +35,5 @@ export class CreateChatMessageAttachmentDto implements Omit<ChatMessageAttachmen
   @IsString()
   @MaxLength(255)
   @ValidateIf((_, value) => value)
-  filename: string | null;
-
-  @ApiProperty({
-    description: 'Resource type of the file of the chat message attachment',
-    examples: ['raw', 'image', 'video'],
-    default: 'raw',
-  })
-  @IsString()
-  @MaxLength(255)
-  @IsDefined()
-  resourceType: string;
+  filename?: string | null;
 }

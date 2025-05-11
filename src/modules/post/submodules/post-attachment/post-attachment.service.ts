@@ -1,97 +1,83 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
+import { Routes } from 'src/core/enums/app.enums';
 import { PrismaService } from 'src/modules/infrastructure/prisma/prisma.service';
-import { PostAttachmentEntity } from './entities/post-attachment.entity';
-import { UpdatePostAttachmentDto } from './DTO/update-post-attachment.dto';
-import { CloudinaryService } from 'src/core/cloudinary/cloudinary.service';
-import { CreatePostAttachmentDto } from './DTO/create-post-attachment.dto';
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
-import { IPrepareSingleResourceForUpload } from 'src/core/cloudinary/cloudinary.types';
+import { SupabaseService } from 'src/modules/infrastructure/supabase/supabase.service';
+import { PostEntity } from 'src/modules/post/entities/post.entity';
+import { CreatePostAttachmentDto } from 'src/modules/post/submodules/post-attachment/DTO/create-post-attachment.dto';
+import { UpdatePostAttachmentDto } from 'src/modules/post/submodules/post-attachment/DTO/update-post-attachment.dto';
+import { PostAttachmentEntity } from 'src/modules/post/submodules/post-attachment/entities/post-attachment.entity';
+import { CreatePostAttachmentUploadedFiles } from 'src/modules/post/submodules/post-attachment/types/post-attachment.types';
+import { v7 as uuid } from 'uuid';
+import * as path from 'path';
 
 @Injectable()
 export class PostAttachmentService {
   constructor(
     private readonly prismaService: PrismaService,
-    private readonly cloudinaryService: CloudinaryService,
+    private readonly supabaseService: SupabaseService,
   ) {}
 
-  async findAllForPost(postId: string): Promise<PostAttachmentEntity[]> {
+  public async findAllForPost(postId: PostEntity['id']): Promise<PostAttachmentEntity[]> {
     return this.prismaService.$transaction(async tx => {
       await tx.post.findUniqueOrThrow({ where: { id: postId } });
       return tx.postAttachment.findMany({ where: { postId } });
     });
   }
 
-  async findById(id: string): Promise<PostAttachmentEntity> {
+  public async findById(id: PostEntity['id']): Promise<PostAttachmentEntity> {
     return this.prismaService.postAttachment.findUniqueOrThrow({ where: { id } });
   }
 
-  async setPostAttachments(
-    postId: string,
+  public async setPostAttachments(
+    postId: PostEntity['id'],
     data: CreatePostAttachmentDto[],
   ): Promise<PostAttachmentEntity[]> {
     return this.prismaService.$transaction(async tx => {
       await tx.postAttachment.deleteMany({ where: { postId } });
-      await tx.postAttachment.createMany({ data });
+      await tx.postAttachment.createMany({ data: data.map(item => ({ ...item, postId })) });
 
       return tx.postAttachment.findMany({ where: { postId } });
     });
   }
 
-  async update(
+  public async update(
     id: string,
     data: UpdatePostAttachmentDto,
-    file?: Express.Multer.File,
+    files?: CreatePostAttachmentUploadedFiles,
   ): Promise<PostAttachmentEntity> {
-    let uploader: IPrepareSingleResourceForUpload | undefined = undefined;
-
-    if (file) {
-      const attachment = await this.findById(id);
-      uploader = this.cloudinaryService.prepareSingleResourceForUpload(file, {
-        mapping: { [`${file.fieldname}`]: 'post_attachments' },
-        beforeUpload: () => {
-          const destroyer = this.cloudinaryService.prepareSingleResourceForDelete({
-            ...attachment,
-            publicId: attachment.file,
-          });
-
-          destroyer.delete();
-        },
-      });
-
-      data = {
-        ...data,
-        file: uploader.resource.publicId,
-        resourceType: uploader.resource.resourceType,
-      };
-    }
-
-    if (!file && data.file !== undefined) {
-      throw new PrismaClientKnownRequestError('The file was not provided!', {
-        code: 'C2000',
-        clientVersion: '',
-      });
+    if (!files?.file?.length) {
+      throw new ConflictException(
+        'Cannot update post attachment. The attachment file was not provided.',
+      );
     }
 
     return this.prismaService.postAttachment
-      .update({
-        data,
-        where: { id },
-      })
-      .then(response => {
-        if (uploader) uploader.upload();
-        return response;
+      .update({ data, where: { id } })
+      .then(postAttachment => {
+        if (files?.file?.length) {
+          const file = files.file[0];
+
+          const filename = `${Routes.Posts}/attachments/${uuid()}${path.extname(file.originalname)}`;
+
+          this.supabaseService.upload(file, filename).then(async response => {
+            if (response.file.filename) {
+              await this.prismaService.postAttachment.update({
+                where: { id: postAttachment.id },
+                data: { location: response.file.filename },
+              });
+            }
+          });
+        }
+
+        return postAttachment;
       });
   }
 
-  async remove(id: string): Promise<PostAttachmentEntity> {
-    return this.prismaService.postAttachment.delete({ where: { id } }).then(response => {
-      const destroyer = this.cloudinaryService.prepareSingleResourceForDelete({
-        ...response,
-        publicId: response.file,
-      });
+  public async remove(id: string): Promise<PostAttachmentEntity> {
+    return this.prismaService.postAttachment.delete({ where: { id } }).then(postAttachment => {
+      this.supabaseService.remove([postAttachment.location]);
 
-      destroyer.delete();
-      return response;
+      return postAttachment;
     });
   }
 }

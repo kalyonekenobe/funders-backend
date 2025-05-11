@@ -1,10 +1,8 @@
 import { Module } from '@nestjs/common';
-import { PrismaModule } from 'src/modules/infrastructure/prisma/prisma.module';
-import { PostReactionController } from './post-reaction.controller';
-import { PostReactionService } from './post-reaction.service';
+import { PostReactionController } from 'src/modules/post/submodules/post-reaction/post-reaction.controller';
+import { PostReactionService } from 'src/modules/post/submodules/post-reaction/post-reaction.service';
 
 @Module({
-  imports: [PrismaModule],
   controllers: [PostReactionController],
   providers: [PostReactionService],
   exports: [PostReactionService],

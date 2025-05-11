@@ -34,7 +34,7 @@ export class UserPenaltyController {
   @ApiForbiddenResponse({ description: 'The user is forbidden to perform this action.' })
   @ApiInternalServerErrorResponse({ description: 'Internal server error was occured.' })
   @Get()
-  public async findAll(@Query() query: Record<string, string>): Promise<UserPenaltyEntity[]> {
+  public async findAll(@Query() query?: Record<string, string>): Promise<UserPenaltyEntity[]> {
     return this.userPenaltyService.findAll(deserializeQueryString(query));
   }
 
@@ -57,7 +57,7 @@ export class UserPenaltyController {
   @Get(':id')
   public async findById(
     @Param('id') id: string,
-    @Query() query: Record<string, string>,
+    @Query() query?: Record<string, string>,
   ): Promise<UserPenaltyEntity> {
     return this.userPenaltyService.findOne(
       _.merge(deserializeQueryString(query), { where: { id } }),

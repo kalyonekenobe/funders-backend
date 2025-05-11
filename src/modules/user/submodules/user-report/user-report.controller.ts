@@ -13,9 +13,11 @@ import {
 import * as _ from 'lodash';
 import { RoutesApiTags } from 'src/core/constants';
 import { Auth } from 'src/core/decorators/auth.decorator';
+import { AuthenticatedUser } from 'src/core/decorators/authenticated-user.decorator';
 import { Routes } from 'src/core/enums/app.enums';
 import { deserializeQueryString } from 'src/core/utils/url.utils';
 import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
+import { UserPublicEntity } from 'src/modules/user/entities/user-public.entity';
 import { CreateUserReportDto } from 'src/modules/user/submodules/user-report/DTO/create-user-report.dto';
 import { UpdateUserReportDto } from 'src/modules/user/submodules/user-report/DTO/update-user-report.dto';
 import { UserReportEntity } from 'src/modules/user/submodules/user-report/entities/user-report.entity';
@@ -29,7 +31,7 @@ export class UserReportController {
   @ApiOkResponse({ description: 'The list of user reports', type: [UserReportEntity] })
   @ApiInternalServerErrorResponse({ description: 'Internal server error was occured.' })
   @Get()
-  public async findAll(@Query() query: Record<string, string>): Promise<UserReportEntity[]> {
+  public async findAll(@Query() query?: Record<string, string>): Promise<UserReportEntity[]> {
     return this.userReportService.findAll(deserializeQueryString(query));
   }
 
@@ -43,7 +45,7 @@ export class UserReportController {
   @Get(':id')
   public async findOne(
     @Param('id') id: string,
-    @Query() query: Record<string, string>,
+    @Query() query?: Record<string, string>,
   ): Promise<UserReportEntity> {
     return this.userReportService.findOne(
       _.merge(deserializeQueryString(query), { where: { id } }),
@@ -60,8 +62,14 @@ export class UserReportController {
   @ApiConflictResponse({ description: 'Cannot create user report. Invalid data was provided.' })
   @ApiInternalServerErrorResponse({ description: 'Internal server error was occured.' })
   @Post()
-  public async create(@Body() createUserReportDto: CreateUserReportDto): Promise<UserReportEntity> {
-    return this.userReportService.create(createUserReportDto);
+  public async create(
+    @Body() createUserReportDto: CreateUserReportDto,
+    @AuthenticatedUser() authenticatedUser: UserPublicEntity,
+  ): Promise<UserReportEntity> {
+    return this.userReportService.create({
+      ...createUserReportDto,
+      reporterId: authenticatedUser.id,
+    });
   }
 
   @Auth(JwtAuthGuard)

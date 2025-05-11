@@ -32,7 +32,7 @@ export class UserPenaltyService {
   }
 
   public async create(data: CreateUserPenaltyDto): Promise<UserPenaltyEntity> {
-    return this.prismaService.userPenalty.create({ data });
+    return this.prismaService.userPenalty.create({ data: { ...data, userId: data.userId || '' } });
   }
 
   public async update(id: string, data: UpdateUserPenaltyDto): Promise<UserPenaltyEntity> {

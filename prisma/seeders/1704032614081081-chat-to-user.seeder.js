@@ -6,13 +6,13 @@ module.exports = {
     const chats = await prisma.chat.findMany({ select: { id: true } });
 
     const data = [
-      { chatId: chats[0].id, userId: users[0].id, role: 'Owner' },
+      { chatId: chats[0].id, userId: users[0].id, role: 'User' },
       { chatId: chats[0].id, userId: users[1].id, role: 'Moderator' },
-      { chatId: chats[0].id, userId: users[2].id, role: 'Participant' },
-      { chatId: chats[0].id, userId: users[3].id, role: 'Participant' },
+      { chatId: chats[0].id, userId: users[2].id, role: 'Administrator' },
+      { chatId: chats[0].id, userId: users[3].id, role: 'Administrator' },
       { chatId: chats[0].id, userId: users[4].id, role: 'Moderator' },
-      { chatId: chats[1].id, userId: users[2].id, role: 'Owner' },
-      { chatId: chats[1].id, userId: users[4].id, role: 'Owner' },
+      { chatId: chats[1].id, userId: users[2].id, role: 'User' },
+      { chatId: chats[1].id, userId: users[4].id, role: 'User' },
     ];
 
     await prisma.chatToUser.createMany({ data });

@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { $Enums } from '@prisma/client';
+import { UserRegistrationMethods, UserRoles } from '@prisma/client';
 import { Transform } from 'class-transformer';
 import {
   IsDate,
@@ -29,13 +29,13 @@ export class CreateUserDto
 {
   @ApiProperty({
     description: "User's registration method",
-    examples: Object.values($Enums.UserRegistrationMethods),
-    default: Object.values($Enums.UserRegistrationMethods)[0],
+    examples: Object.values(UserRegistrationMethods),
+    default: Object.values(UserRegistrationMethods)[0],
   })
-  @IsEnum($Enums.UserRegistrationMethods)
+  @IsEnum(UserRegistrationMethods)
   @IsNotEmpty()
   @IsDefined()
-  userRegistrationMethod: $Enums.UserRegistrationMethods;
+  userRegistrationMethod: UserRegistrationMethods;
 
   @ApiProperty({
     description: "User's role",
@@ -47,7 +47,7 @@ export class CreateUserDto
   @IsString()
   @IsNotEmpty()
   @IsDefined()
-  role: string;
+  role: UserRoles;
 
   @ApiProperty({
     description: "User's first name",
@@ -69,7 +69,6 @@ export class CreateUserDto
   @Matches(/^[\p{Letter}\p{Mark}\- ]+$/gu)
   @MaxLength(50)
   @IsString()
-  @ValidateIf((_, value) => value)
   @IsNotEmpty()
   @IsDefined()
   lastName: string;

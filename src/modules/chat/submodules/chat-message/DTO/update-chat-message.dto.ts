@@ -1,24 +1,22 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { ChatMessageStatuses } from '@prisma/client';
 import {
   IsBoolean,
   IsDate,
+  IsEnum,
   IsNotEmpty,
+  IsOptional,
   IsString,
   Matches,
   MaxDate,
   ValidateIf,
 } from 'class-validator';
-import { ChatMessageEntity } from '../entities/chat-message.entity';
-import { CreateChatMessageAttachmentDto } from 'src/chat-message-attachment/dto/create-chat-message-attachment.dto';
+import { ChatMessageEntity } from 'src/modules/chat/submodules/chat-message/entities/chat-message.entity';
+import { UpdateChatMessageAttachmentDto } from 'src/modules/chat/submodules/chat-message/submodules/chat-message-attachment/DTO/update-chat-message-attachment.dto';
 
-type UpdateChatMessage = Omit<
-  Partial<ChatMessageEntity>,
-  'id' | 'chatId' | 'authorId' | 'replyTo' | 'createdAt' | 'updatedAt' | 'attachments'
-> & {
-  attachments?: Omit<CreateChatMessageAttachmentDto, 'messageId'>[];
-};
-
-export class UpdateChatMessageDto implements UpdateChatMessage {
+export class UpdateChatMessageDto
+  implements Pick<Partial<ChatMessageEntity>, 'content' | 'isPinned' | 'status' | 'removedAt'>
+{
   @ApiProperty({
     description: 'The text of the chat message',
     examples: ['Hi', 'Hello, world!', 'The first message'],
@@ -26,9 +24,8 @@ export class UpdateChatMessageDto implements UpdateChatMessage {
   })
   @Matches(/^[\p{Letter}\p{Mark}\-!?\.,:@#№$;%^&*()_+="'`/\\{}\[\]|~\d\s<>]+$/gu)
   @IsString()
-  @IsNotEmpty()
   @ValidateIf((_, value) => value)
-  text?: string;
+  content?: string;
 
   @ApiProperty({
     description: 'Is the chat message pinned',
@@ -38,6 +35,15 @@ export class UpdateChatMessageDto implements UpdateChatMessage {
   @IsBoolean()
   @ValidateIf((_, value) => value)
   isPinned?: boolean;
+
+  @ApiProperty({
+    description: 'The status of the chat message',
+    examples: Object.values(ChatMessageStatuses),
+    default: Object.values(ChatMessageStatuses)[0],
+  })
+  @IsEnum(ChatMessageStatuses)
+  @IsOptional()
+  status?: ChatMessageStatuses;
 
   @ApiProperty({
     description: 'The date and time the chat message was removed',
@@ -52,5 +58,5 @@ export class UpdateChatMessageDto implements UpdateChatMessage {
 
   @ApiProperty({ description: 'The nested array of attachments of this chat message' })
   @ValidateIf((_, value) => value)
-  attachments?: Omit<CreateChatMessageAttachmentDto, 'messageId'>[];
+  attachments?: Pick<UpdateChatMessageAttachmentDto, 'location' | 'filename'>[];
 }

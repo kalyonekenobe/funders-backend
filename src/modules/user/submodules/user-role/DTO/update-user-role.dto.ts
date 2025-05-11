@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { UserRole } from '@prisma/client';
+import { UserRole, UserRoles } from '@prisma/client';
+import { Type } from 'class-transformer';
 import { IsNumber, IsString, Matches, Max, MaxLength, ValidateIf } from 'class-validator';
 
 export class UpdateUserRoleDto implements Pick<Partial<UserRole>, 'name' | 'permissions'> {
@@ -12,7 +13,7 @@ export class UpdateUserRoleDto implements Pick<Partial<UserRole>, 'name' | 'perm
   @MaxLength(50)
   @IsString()
   @ValidateIf((_, value) => value)
-  name?: string;
+  name?: UserRoles;
 
   @ApiProperty({
     description: 'The total value of user role permissions',
@@ -20,6 +21,7 @@ export class UpdateUserRoleDto implements Pick<Partial<UserRole>, 'name' | 'perm
     default: 255,
   })
   @Max(2 ** 64 - 1)
+  @Type(() => BigInt)
   @IsNumber()
   @ValidateIf((_, value) => value)
   permissions?: bigint;

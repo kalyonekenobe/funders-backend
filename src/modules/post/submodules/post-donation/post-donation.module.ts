@@ -1,10 +1,8 @@
 import { Module } from '@nestjs/common';
-import { PrismaModule } from 'src/modules/infrastructure/prisma/prisma.module';
-import { PostDonationController } from './post-donation.controller';
-import { PostDonationService } from './post-donation.service';
+import { PostDonationController } from 'src/modules/post/submodules/post-donation/post-donation.controller';
+import { PostDonationService } from 'src/modules/post/submodules/post-donation/post-donation.service';
 
 @Module({
-  imports: [PrismaModule],
   controllers: [PostDonationController],
   providers: [PostDonationService],
   exports: [PostDonationService],

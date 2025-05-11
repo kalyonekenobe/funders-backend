@@ -5,7 +5,7 @@ import { Transform } from 'class-transformer';
 import {
   IsBoolean,
   IsDate,
-  IsDecimal,
+  IsNumber,
   IsDefined,
   IsNotEmpty,
   IsString,
@@ -13,16 +13,15 @@ import {
   Matches,
   MaxDate,
   MaxLength,
-  Validate,
+  Min,
   ValidateIf,
 } from 'class-validator';
-import { CategoriesOnPostsEntity } from 'src/categories-on-posts/entities/categories-on-posts.entity';
-import { DecimalMin } from 'src/core/validation/decorators/decimal-min.decorator';
-import { PostAttachmentEntity } from 'src/post-attachment/entities/post-attachment.entity';
-import { PostCommentEntity } from 'src/post-comment/entities/post-comment.entity';
-import { PostDonationEntity } from 'src/post-donation/entities/post-donation.entity';
-import { PostReactionEntity } from 'src/post-reaction/entities/post-reaction.entity';
-import { UserPublicEntity } from 'src/user/entities/user-public.entity';
+import { CategoryToPostEntity } from 'src/modules/post/submodules/category-to-post/entities/category-to-post.entity';
+import { PostAttachmentEntity } from 'src/modules/post/submodules/post-attachment/entities/post-attachment.entity';
+import { PostCommentEntity } from 'src/modules/post/submodules/post-comment/entities/post-comment.entity';
+import { PostDonationEntity } from 'src/modules/post/submodules/post-donation/entities/post-donation.entity';
+import { PostReactionEntity } from 'src/modules/post/submodules/post-reaction/entities/post-reaction.entity';
+import { UserPublicEntity } from 'src/modules/user/entities/user-public.entity';
 
 export class PostEntity implements Post {
   @ApiProperty({
@@ -85,16 +84,25 @@ export class PostEntity implements Post {
     default: 8950,
   })
   @Transform(value => new Decimal(value.value))
-  @Validate(DecimalMin, [0.01])
-  @IsDecimal()
+  @Min(0.01)
+  @IsNumber()
   @IsDefined()
   fundsToBeRaised: Decimal;
 
   @ApiProperty({ description: 'The image path of the post' })
   @IsString()
-  @MaxLength(255)
   @ValidateIf((_, value) => value)
   image: string | null;
+
+  @ApiProperty({
+    description: 'The date and time the post has to raise the money',
+    examples: [new Date('2024-01-03'), new Date('2023-11-02'), new Date('2023-06-30')],
+    default: new Date('2024-01-03'),
+  })
+  @IsDate()
+  @MaxDate(new Date())
+  @ValidateIf((_, value) => value)
+  deadline: Date | null;
 
   @ApiProperty({
     description: 'Is the post draft',
@@ -142,7 +150,7 @@ export class PostEntity implements Post {
   author?: UserPublicEntity;
 
   @ApiProperty({ description: 'The nested array of categories of this post' })
-  categories?: CategoriesOnPostsEntity[];
+  categories?: CategoryToPostEntity[];
 
   @ApiProperty({ description: 'The nested array of attachments of this post' })
   attachments?: PostAttachmentEntity[];
