@@ -2,7 +2,6 @@ export interface FundersCoreProgramModuleOptions {
   solanaRpcHttpEndpoint: string;
   fundersCoreProgramId: string;
 }
-
 export type FundersCore = {
   version: '0.1.0';
   name: 'funders_core';
@@ -121,7 +120,7 @@ export type FundersCore = {
         {
           name: 'user';
           isMut: true;
-          isSigner: true;
+          isSigner: false;
         },
         {
           name: 'admin';
@@ -353,7 +352,7 @@ export const IDL: FundersCore = {
         {
           name: 'user',
           isMut: true,
-          isSigner: true,
+          isSigner: false,
         },
         {
           name: 'admin',

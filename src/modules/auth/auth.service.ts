@@ -10,6 +10,7 @@ import { CreateUserDto } from 'src/modules/user/DTO/create-user.dto';
 import {
   GenerateDiscordOAuth2Response,
   GenerateGoogleOAuth2Response,
+  GetSolanaWalletSignInMessageResponse,
   JwtTokensPairResponse,
   LoginResponse,
   OAuth2Payload,
@@ -28,7 +29,11 @@ import { UserRegistrationMethods } from '@prisma/client';
 import { ServerException } from 'src/core/exceptions/server.exception';
 import bs58 from 'bs58';
 import * as nacl from 'tweetnacl';
+import { v7 as uuid } from 'uuid';
 import { LoginWithSolanaWalletDto } from 'src/modules/auth/DTO/login-with-solana-wallet.dto';
+import * as crypto from 'crypto';
+import { SolanaSignInInput } from '@solana/wallet-standard-features';
+import { SolanaService } from 'src/modules/solana/solana.service';
 
 @Injectable()
 export class AuthService {
@@ -40,6 +45,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly httpService: HttpService,
     private readonly configService: ConfigService,
+    private readonly solanaService: SolanaService,
   ) {
     this.googleOAuth2Client = new google.auth.OAuth2(
       configService.get<string>(ConfigVariables.GoogleClientId),
@@ -91,6 +97,11 @@ export class AuthService {
 
   public async register(data: CreateUserDto): Promise<RegisterResponse> {
     const user = await this.userService.create(data);
+
+    if (user.walletPublicKey) {
+      this.solanaService.createUser(user.id);
+    }
+
     const { accessToken, refreshToken } = await this.generateJwtTokensPair(user);
 
     await this.userService.update(user.id, { refreshToken });
@@ -394,6 +405,54 @@ export class AuthService {
 
       return { token };
     }
+  }
+
+  public async getSolanaWalletSignInMessage(
+    address: string,
+  ): Promise<GetSolanaWalletSignInMessageResponse> {
+    const template = this.configService.get<string>(ConfigVariables.AuthMessageTemplate) || '';
+
+    const now = new Date();
+    const uri = this.configService.get<string>(ConfigVariables.ClientUri) || 'http://localhost';
+    const currentUrl = new URL(uri);
+    const domain = currentUrl.host;
+    const currentDateTime = now.toISOString();
+    const expiresAtDateTime = new Date(now.setMinutes(now.getMinutes() + 10)).toISOString();
+    const notBeforeDateTime = currentDateTime;
+    const nonce = crypto.randomBytes(16).toString('base64');
+    const requestId = uuid();
+
+    const data: SolanaSignInInput = {
+      statement: `Clicking Sign or Approve only means you have proved this wallet is owned by you. This request will not trigger any blockchain transaction or cost any gas fee.`,
+      version: '1',
+      chainId: 'mainnet',
+      issuedAt: currentDateTime,
+      expirationTime: expiresAtDateTime,
+      notBefore: notBeforeDateTime,
+      resources: [uri, 'https://phantom.app/'],
+      domain,
+      nonce,
+      requestId,
+    };
+
+    const resources =
+      data.resources?.reduce((previous, current) => `${previous}- ${current}\n`, '') || '';
+
+    return {
+      message: template
+        .replace(':domain', data.domain || 'localhost')
+        .replace(':address', address)
+        .replace(':statement', data.statement || '')
+        .replace(':uri', data.uri || '')
+        .replace(':version', data.version || '')
+        .replace(':chainId', data.chainId || '')
+        .replace(':nonce', data.nonce || '')
+        .replace(':issuedAt', data.issuedAt || '')
+        .replace(':expirationTime', data.expirationTime || '')
+        .replace(':notBefore', data.notBefore || '')
+        .replace(':requestId', data.requestId || '')
+        .replace(':resources', resources),
+    };
   }
 
   private async generateJwtTokensPair(user: UserPublicEntity): Promise<JwtTokensPairResponse> {

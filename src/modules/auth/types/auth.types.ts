@@ -44,3 +44,7 @@ export interface GenerateGoogleOAuth2Response {
 export interface GenerateDiscordOAuth2Response {
   token: string;
 }
+
+export interface GetSolanaWalletSignInMessageResponse {
+  message: string;
+}

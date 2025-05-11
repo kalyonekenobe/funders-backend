@@ -1,0 +1,11 @@
+{
+  "name": "Funders Soulbound",
+  "symbol": "FUNDERSSB",
+  "description": "The Funders soulbound NFT",
+  "external_url": "https://funders.com",
+  "properties": {
+    "files": [],
+    "category": "image"
+  },
+  "attributes": []
+}

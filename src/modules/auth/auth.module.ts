@@ -9,6 +9,7 @@ import { UserService } from 'src/modules/user/user.service';
 import { ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigVariables } from 'src/core/enums/app.enums';
+import { SolanaService } from 'src/modules/solana/solana.service';
 
 @Module({
   imports: [
@@ -26,6 +27,13 @@ import { ConfigVariables } from 'src/core/enums/app.enums';
     HttpModule,
   ],
   controllers: [AuthController],
-  providers: [UserService, AuthService, LocalStrategy, JwtStrategy, JwtRefreshStrategy],
+  providers: [
+    UserService,
+    AuthService,
+    LocalStrategy,
+    JwtStrategy,
+    JwtRefreshStrategy,
+    SolanaService,
+  ],
 })
 export class AuthModule {}

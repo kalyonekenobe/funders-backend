@@ -1,6 +1,7 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule, JwtModuleOptions, JwtService } from '@nestjs/jwt';
+import { ServeStaticModule } from '@nestjs/serve-static';
 import { WinstonModule, WinstonModuleOptions } from 'nest-winston';
 import { ConfigVariables } from 'src/core/enums/app.enums';
 import { AuthModule } from 'src/modules/auth/auth.module';
@@ -18,15 +19,21 @@ import { StripeModuleOptions } from 'src/modules/infrastructure/stripe/types/str
 import { SupabaseModule } from 'src/modules/infrastructure/supabase/supabase.module';
 import { SupabaseModuleOptions } from 'src/modules/infrastructure/supabase/types/supabase.types';
 import { PostModule } from 'src/modules/post/post.module';
+import { SolanaModule } from 'src/modules/solana/solana.module';
 import { UserModule } from 'src/modules/user/user.module';
 import { UtilsModule } from 'src/modules/utils/utils.module';
 import * as winston from 'winston';
+import * as path from 'path';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       envFilePath: ['./env/.env.development'],
       isGlobal: true,
+    }),
+    ServeStaticModule.forRoot({
+      rootPath: path.join(__dirname, '..', 'static'),
+      serveRoot: '/static',
     }),
     JwtModule.registerAsync({
       useFactory: async (configService: ConfigService): Promise<JwtModuleOptions> => ({
@@ -118,6 +125,7 @@ import * as winston from 'winston';
     AuthModule,
     PostModule,
     ChatModule,
+    SolanaModule,
     UtilsModule,
   ],
 })

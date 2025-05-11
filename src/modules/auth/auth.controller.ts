@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpStatus, Post, Req, Res } from '@nestjs/common';
+import { Body, Controller, Get, HttpStatus, Post, Query, Req, Res } from '@nestjs/common';
 import { Request, Response } from 'express';
 import {
   ApiConflictResponse,
@@ -29,6 +29,7 @@ import { LoginWithDiscordDto } from 'src/modules/auth/DTO/login-with-discord.dto
 import { LoginWithSolanaWalletDto } from 'src/modules/auth/DTO/login-with-solana-wallet.dto';
 import { LoginResponse, RefreshResponse, RegisterResponse } from 'src/core/types/auth.types';
 import { ConfigService } from '@nestjs/config';
+import { GetSolanaWalletSignInMessageResponse } from 'src/modules/auth/types/auth.types';
 
 @ApiTags(RoutesApiTags[Routes.Auth])
 @Controller(Routes.Auth)
@@ -372,6 +373,17 @@ export class AuthController {
         },
       )
       .json(user);
+  }
+
+  @ApiOkResponse({ description: 'The solana wallet message to sign.' })
+  @ApiInternalServerErrorResponse({ description: 'Internal server error was occured.' })
+  @Get('/login/wallet/solana/message')
+  public async getSolanaWalletSignInMessage(
+    @Query() query: Record<string, string>,
+  ): Promise<GetSolanaWalletSignInMessageResponse> {
+    const { address } = query;
+
+    return this.authService.getSolanaWalletSignInMessage(address);
   }
 
   @Auth(JwtRefreshAuthGuard)

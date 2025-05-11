@@ -50,8 +50,8 @@ export enum ConfigVariables {
   SolanaRpcHttpEndpoint = 'SOLANA_RPC_HTTP_ENDPOINT',
   AuthMessageTemplate = 'AUTH_MESSAGE_TEMPLATE',
   FundersCoreProgramId = 'FUNDERS_CORE_PROGRAM_ID',
-  FundersCoreProgramAdminPublicKey = 'FUNDERS_CORE_PROGRAM_ID_ADMIN_PUBLIC_KEY',
-  FundersCoreProgramAdminPrivateKey = 'FUNDERS_CORE_PROGRAM_ID_ADMIN_PRIVATE_KEY',
+  FundersCoreProgramAdminPublicKey = 'FUNDERS_CORE_PROGRAM_ADMIN_PUBLIC_KEY',
+  FundersCoreProgramAdminPrivateKey = 'FUNDERS_CORE_PROGRAM_ADMIN_PRIVATE_KEY',
 }
 
 export enum Routes {
