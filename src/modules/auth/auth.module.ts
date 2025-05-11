@@ -10,6 +10,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigVariables } from 'src/core/enums/app.enums';
 import { SolanaService } from 'src/modules/solana/solana.service';
+import { OAuth2Controller } from 'src/modules/auth/oauth2.controller';
 
 @Module({
   imports: [
@@ -26,7 +27,7 @@ import { SolanaService } from 'src/modules/solana/solana.service';
     }),
     HttpModule,
   ],
-  controllers: [AuthController],
+  controllers: [AuthController, OAuth2Controller],
   providers: [
     UserService,
     AuthService,

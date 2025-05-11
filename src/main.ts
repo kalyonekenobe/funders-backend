@@ -15,8 +15,8 @@ const bootstrap = async () => {
   app.useGlobalFilters(new AllExceptionFilter(app.get(HttpAdapterHost)));
 
   const config = new DocumentBuilder()
-    .setTitle('Nomadz')
-    .setDescription('The Nomadz API')
+    .setTitle('Funders')
+    .setDescription('The Funders API')
     .setVersion('0.1')
     .build();
 

@@ -56,6 +56,7 @@ export enum ConfigVariables {
 
 export enum Routes {
   Auth = 'auth',
+  OAuth2 = 'oauth2',
   Users = 'users',
   Chats = 'chats',
   Posts = 'posts',

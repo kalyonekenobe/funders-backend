@@ -25,4 +25,6 @@ export const RoutesApiTags = {
   [Routes.UserRoles]: 'User roles',
   [Routes.Stripe]: 'Stripe',
   [Routes.Utils]: 'Utils',
+  [Routes.Auth]: 'Auth',
+  [Routes.OAuth2]: 'OAuth2',
 };

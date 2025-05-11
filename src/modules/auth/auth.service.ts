@@ -13,7 +13,6 @@ import {
   GetSolanaWalletSignInMessageResponse,
   JwtTokensPairResponse,
   LoginResponse,
-  OAuth2Payload,
   RefreshResponse,
   RegisterResponse,
 } from 'src/modules/auth/types/auth.types';
@@ -34,6 +33,7 @@ import { LoginWithSolanaWalletDto } from 'src/modules/auth/DTO/login-with-solana
 import * as crypto from 'crypto';
 import { SolanaSignInInput } from '@solana/wallet-standard-features';
 import { SolanaService } from 'src/modules/solana/solana.service';
+import { GenerateOAuth2UrlDto } from 'src/modules/auth/DTO/generate-oauth2-url.dto';
 
 @Injectable()
 export class AuthService {
@@ -260,7 +260,7 @@ export class AuthService {
     return this.userService.update(logoutDto.userId, { refreshToken: null });
   }
 
-  public async generateGoogleOAuth2Url(payload: OAuth2Payload): Promise<string | never> {
+  public async generateGoogleOAuth2Url(payload: GenerateOAuth2UrlDto): Promise<string | never> {
     return this.googleOAuth2Client.generateAuthUrl({
       access_type: 'offline',
       scope: [
@@ -301,6 +301,7 @@ export class AuthService {
             email,
             firstName,
             lastName,
+            provider: UserRegistrationMethods.Google.toLowerCase(),
             accessToken: tokens.access_token,
             referer: state.referer,
           },
@@ -328,7 +329,7 @@ export class AuthService {
     }
   }
 
-  public async generateDiscordOAuth2Url(payload: OAuth2Payload): Promise<string | never> {
+  public async generateDiscordOAuth2Url(payload: GenerateOAuth2UrlDto): Promise<string | never> {
     const clientId = this.configService.get<string>(ConfigVariables.DiscordClientId);
     const state = JSON.stringify(payload);
     const redirectUri = `${this.configService.get<string>(ConfigVariables.ServerUri)}/oauth2/callback/discord`;
@@ -380,6 +381,7 @@ export class AuthService {
         const token = this.jwtService.sign(
           {
             email,
+            provider: UserRegistrationMethods.Discord.toLowerCase(),
             accessToken: access_token,
             referer: state.referer,
           },
