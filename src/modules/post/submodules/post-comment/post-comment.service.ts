@@ -13,12 +13,16 @@ import { UpdatePostCommentDto } from 'src/modules/post/submodules/post-comment/D
 import { Routes } from 'src/core/enums/app.enums';
 import { v7 as uuid } from 'uuid';
 import * as path from 'path';
+import { GeminiService } from 'src/modules/infrastructure/gemini/gemini.service';
+import { LoggerService } from 'src/modules/infrastructure/logger/logger.service';
 
 @Injectable()
 export class PostCommentService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly supabaseService: SupabaseService,
+    private readonly geminiService: GeminiService,
+    private readonly loggerService: LoggerService,
   ) {}
 
   public async findAllForPost(postId: string): Promise<PostCommentEntity[]> {
@@ -57,6 +61,22 @@ export class PostCommentService {
         }),
       )
       .then(async postComment => {
+        this.geminiService
+          .checkForSpamOrInsultingContent(postComment.content)
+          .then(async result => {
+            if (result) {
+              await this.prismaService.postComment.delete({ where: { id: postComment.id } });
+
+              this.loggerService.log(
+                `The post comment with id: ${postComment.id} was deleted due to the spam or insulting content`,
+                PostCommentService.name,
+              );
+            }
+          })
+          .catch(error => {
+            this.loggerService.error(error.message, error.stack, PostCommentService.name);
+          });
+
         if (files?.attachments?.length) {
           Promise.all(
             files.attachments.map(attachment => {
@@ -110,6 +130,22 @@ export class PostCommentService {
         }),
       )
       .then(async ({ attachments: attachmentsInPostComment, ...postComment }) => {
+        this.geminiService
+          .checkForSpamOrInsultingContent(postComment.content)
+          .then(async result => {
+            if (result) {
+              await this.prismaService.postComment.delete({ where: { id: postComment.id } });
+
+              this.loggerService.log(
+                `The post comment with id: ${postComment.id} was deleted due to the spam or insulting content`,
+                PostCommentService.name,
+              );
+            }
+          })
+          .catch(error => {
+            this.loggerService.error(error.message, error.stack, PostCommentService.name);
+          });
+
         if (!attachments?.length && !files?.attachments?.length) {
           await this.prismaService.postComment.update({
             where: { id: postComment.id },

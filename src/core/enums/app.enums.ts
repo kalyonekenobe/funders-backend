@@ -52,8 +52,8 @@ export enum ConfigVariables {
   FundersCoreProgramId = 'FUNDERS_CORE_PROGRAM_ID',
   FundersCoreProgramAdminPublicKey = 'FUNDERS_CORE_PROGRAM_ADMIN_PUBLIC_KEY',
   FundersCoreProgramAdminPrivateKey = 'FUNDERS_CORE_PROGRAM_ADMIN_PRIVATE_KEY',
-  OpenAIApiKey = 'OPENAI_API_KEY',
-  OpenAIModel = 'OPENAI_MODEL',
+  GeminiApiKey = 'GEMINI_API_KEY',
+  GeminiModel = 'GEMINI_MODEL',
 }
 
 export enum Routes {

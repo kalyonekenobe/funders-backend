@@ -24,8 +24,8 @@ import { UserModule } from 'src/modules/user/user.module';
 import { UtilsModule } from 'src/modules/utils/utils.module';
 import * as winston from 'winston';
 import * as path from 'path';
-import { OpenAIModule } from 'src/modules/infrastructure/openai/openai.module';
 import { PaymentModule } from 'src/modules/infrastructure/payment/payment.module';
+import { GeminiModule } from 'src/modules/infrastructure/gemini/gemini.module';
 
 @Module({
   imports: [
@@ -121,10 +121,10 @@ import { PaymentModule } from 'src/modules/infrastructure/payment/payment.module
       }),
       inject: [ConfigService],
     }),
-    OpenAIModule.registerAsync({
+    GeminiModule.registerAsync({
       useFactory: async (configService: ConfigService) => ({
-        apiKey: configService.get<string>(ConfigVariables.OpenAIApiKey) || '',
-        model: configService.get<string>(ConfigVariables.OpenAIModel) || '',
+        apiKey: configService.get<string>(ConfigVariables.GeminiApiKey) || '',
+        model: configService.get<string>(ConfigVariables.GeminiModel) || '',
       }),
       inject: [ConfigService],
     }),

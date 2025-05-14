@@ -13,12 +13,16 @@ import {
 import { Routes } from 'src/core/enums/app.enums';
 import { v7 as uuid } from 'uuid';
 import * as path from 'path';
+import { LoggerService } from 'src/modules/infrastructure/logger/logger.service';
+import { GeminiService } from 'src/modules/infrastructure/gemini/gemini.service';
 
 @Injectable()
 export class PostService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly supabaseService: SupabaseService,
+    private readonly geminiService: GeminiService,
+    private readonly loggerService: LoggerService,
   ) {}
 
   public async findAll(options?: Prisma.PostFindManyArgs): Promise<PostEntity[]> {
@@ -59,6 +63,22 @@ export class PostService {
         },
       })
       .then(async post => {
+        this.geminiService
+          .checkForSpamOrInsultingContent(`${post.title} ${post.content}`)
+          .then(async result => {
+            if (result) {
+              await this.prismaService.post.delete({ where: { id: post.id } });
+
+              this.loggerService.log(
+                `The post with id: ${post.id} was deleted due to the spam or insulting content`,
+                PostService.name,
+              );
+            }
+          })
+          .catch(error => {
+            this.loggerService.error(error.message, error.stack, PostService.name);
+          });
+
         if (files?.image?.length) {
           const image = files?.image[0];
           const filename = `${Routes.Posts}/${uuid()}${path.extname(image.originalname)}`;
@@ -132,6 +152,22 @@ export class PostService {
         },
       })
       .then(async ({ attachments: attachmentsInPost, ...post }) => {
+        this.geminiService
+          .checkForSpamOrInsultingContent(`${post.title} ${post.content}`)
+          .then(async result => {
+            if (result) {
+              await this.prismaService.post.delete({ where: { id: post.id } });
+
+              this.loggerService.log(
+                `The post with id: ${post.id} was deleted due to the spam or insulting content`,
+                PostService.name,
+              );
+            }
+          })
+          .catch(error => {
+            this.loggerService.error(error.message, error.stack, PostService.name);
+          });
+
         if (image === 'null') {
           await this.prismaService.post.update({
             where: { id: post.id },
