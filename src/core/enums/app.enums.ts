@@ -52,6 +52,8 @@ export enum ConfigVariables {
   FundersCoreProgramId = 'FUNDERS_CORE_PROGRAM_ID',
   FundersCoreProgramAdminPublicKey = 'FUNDERS_CORE_PROGRAM_ADMIN_PUBLIC_KEY',
   FundersCoreProgramAdminPrivateKey = 'FUNDERS_CORE_PROGRAM_ADMIN_PRIVATE_KEY',
+  OpenAIApiKey = 'OPENAI_API_KEY',
+  OpenAIModel = 'OPENAI_MODEL',
 }
 
 export enum Routes {
@@ -81,6 +83,7 @@ export enum Routes {
   ChatRoles = 'chat-roles',
   Stripe = 'stripe',
   Utils = 'utils',
+  Payments = 'payments',
 }
 
 export enum LogLevels {

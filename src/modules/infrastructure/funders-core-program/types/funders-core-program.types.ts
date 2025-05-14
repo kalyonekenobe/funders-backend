@@ -2,6 +2,7 @@ export interface FundersCoreProgramModuleOptions {
   solanaRpcHttpEndpoint: string;
   fundersCoreProgramId: string;
 }
+
 export type FundersCore = {
   version: '0.1.0';
   name: 'funders_core';

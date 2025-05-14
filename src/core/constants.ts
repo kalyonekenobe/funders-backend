@@ -27,4 +27,5 @@ export const RoutesApiTags = {
   [Routes.Utils]: 'Utils',
   [Routes.Auth]: 'Auth',
   [Routes.OAuth2]: 'OAuth2',
+  [Routes.Payments]: 'Payments',
 };

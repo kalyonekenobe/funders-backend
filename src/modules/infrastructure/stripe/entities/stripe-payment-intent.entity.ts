@@ -183,14 +183,6 @@ export class StripePaymentIntentEntity implements Stripe.PaymentIntent {
   description: string | null;
 
   @ApiProperty({
-    description: 'The associated invoice.',
-    examples: [null],
-    default: null,
-  })
-  @ValidateIf((_, value) => value)
-  invoice: string | Stripe.Invoice | null;
-
-  @ApiProperty({
     description: 'The last payment error encountered by this PaymentIntent, if any.',
     examples: [null],
     default: null,

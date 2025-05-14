@@ -24,6 +24,8 @@ import { UserModule } from 'src/modules/user/user.module';
 import { UtilsModule } from 'src/modules/utils/utils.module';
 import * as winston from 'winston';
 import * as path from 'path';
+import { OpenAIModule } from 'src/modules/infrastructure/openai/openai.module';
+import { PaymentModule } from 'src/modules/infrastructure/payment/payment.module';
 
 @Module({
   imports: [
@@ -94,7 +96,7 @@ import * as path from 'path';
       useFactory: async (configService: ConfigService): Promise<StripeModuleOptions> => ({
         secretKey: configService.get<string>(ConfigVariables.StripeSecretKey) || '',
         options: {
-          apiVersion: '2024-12-18.acacia',
+          apiVersion: '2025-04-30.basil',
         },
       }),
       inject: [ConfigService],
@@ -119,6 +121,13 @@ import * as path from 'path';
       }),
       inject: [ConfigService],
     }),
+    OpenAIModule.registerAsync({
+      useFactory: async (configService: ConfigService) => ({
+        apiKey: configService.get<string>(ConfigVariables.OpenAIApiKey) || '',
+        model: configService.get<string>(ConfigVariables.OpenAIModel) || '',
+      }),
+      inject: [ConfigService],
+    }),
     PrismaModule,
     LoggerModule,
     UserModule,
@@ -127,6 +136,7 @@ import * as path from 'path';
     ChatModule,
     SolanaModule,
     UtilsModule,
+    PaymentModule,
   ],
 })
 export class AppModule implements NestModule {
