@@ -13,15 +13,6 @@ export class GeminiService extends GoogleGenAI {
   }
 
   public async ask(prompt: string, systemMessage?: string): Promise<GenerateContentResponse> {
-    console.log(
-      systemMessage
-        ? `ATTENTION, SYSTEM MESSAGE FOR YOU:
-    ${systemMessage}
-    
-    USER MESSAGE:
-    ${prompt}`
-        : prompt,
-    );
     return this.models.generateContent({
       model: this.model,
       contents: systemMessage
