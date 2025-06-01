@@ -37,6 +37,7 @@ COPY --chown=node:node --from=build /app/package.json /app/pnpm-lock.yaml ./
 COPY --chown=node:node --from=build /app/node_modules ./node_modules
 COPY --chown=node:node --from=build /app/dist ./dist
 COPY --chown=node:node --from=build /app/prisma ./prisma
+COPY --chown=node:node --from=build /app/static ./static
 
 CMD ["sh", "-c", "NODE_OPTIONS='--max-old-space-size=2048' node dist/main.js"]
 
