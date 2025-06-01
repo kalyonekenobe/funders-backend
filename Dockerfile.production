@@ -6,7 +6,7 @@ ENV PNPM_HOME=/usr/local/bin
 FROM base AS build
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y python3 make g++ && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y python3 make g++ openssl && rm -rf /var/lib/apt/lists/*
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
 COPY package*.json ./
@@ -29,6 +29,7 @@ USER node
 FROM base AS production
 WORKDIR /app
 
+RUN apt-get update -y && apt-get install -y openssl
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
 ENV NODE_ENV=production
