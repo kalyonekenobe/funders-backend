@@ -79,7 +79,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 10240M
+          memory: 1024M
     restart: on-failure
 
   database:
